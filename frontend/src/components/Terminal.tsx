@@ -87,7 +87,7 @@ export default function Terminal() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [lines]);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (locked || !input.trim()) return;
 
@@ -100,7 +100,7 @@ export default function Terminal() {
       { text: `> ${"*".repeat(attempt.length)}`, type: "input" },
     ]);
 
-    const valid = await checkPassword(attempt);
+    const valid = checkPassword(attempt);
 
     if (valid) {
       setLines((prev) => [
