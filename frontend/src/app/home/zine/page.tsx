@@ -18,7 +18,7 @@ export default function ZinePage() {
   if (!authorized) return null;
 
   return (
-    <div className="relative min-h-screen bg-black flex flex-col overflow-hidden">
+    <div className="relative min-h-screen bg-black flex flex-col overflow-hidden cursor-none">
       {/* VHS scanline overlay */}
       <div
         className="fixed inset-0 pointer-events-none z-50"

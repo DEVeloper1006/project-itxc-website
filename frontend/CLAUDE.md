@@ -9,9 +9,9 @@ Context for Claude Code sessions on this repo. Read this first.
 
 ## Project
 
-Countdown / interactive teaser website for a friend's poetry book **"Intoxicated"**, releasing July–August 2026. Inspired by Drake's *Iceman* rollout site (built by Low Battery, Toronto). Goal: drop an atmospheric, gated experience leading up to release.
+Countdown / interactive teaser website for a friend's poetry book **"Intoxicated"**, releasing **September 1st 2026**. Inspired by Drake's *Iceman* rollout site (built by Low Battery, Toronto). Goal: drop an atmospheric, gated experience leading up to release.
 
-**Book vibe**: multiple acts, "shots after shots" pacing, toxic-relationships theme. Visual aesthetic = in-your-face, Chrome Hearts–style gothic typography, black + red palette. Empty opera hall background on the homepage.
+**Book vibe**: multiple acts, "shots after shots" pacing, toxic-relationships theme. Visual aesthetic = in-your-face, Chrome Hearts–style gothic typography, black + red palette. B&W opera hall / mansion staircase background on the homepage.
 
 ## Stack
 
@@ -26,18 +26,27 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
 ```
 /
 ├── frontend/                         ← active dev
+│   ├── public/
+│   │   ├── fonts/
+│   │   │   └── CloisterBlack.ttf     ← Chrome Hearts–style gothic font
+│   │   └── images/
+│   │       └── homepage-bg.jpg       ← B&W opera hall / mansion staircase
 │   └── src/
 │       ├── app/
 │       │   ├── page.tsx              ← Gate 1 (matrix terminal password gate)
 │       │   ├── layout.tsx            ← root layout, Geist Mono font, black bg
-│       │   ├── globals.css           ← Tailwind 4, dark theme, red selection
+│       │   ├── globals.css           ← Tailwind 4, CloisterBlack @font-face, dark theme
 │       │   └── home/
-│       │       ├── page.tsx          ← homepage (placeholder + "Enter Zine" link)
-│       │       └── zine/page.tsx     ← magazine/zine viewer page
+│       │       ├── layout.tsx        ← home layout, mounts CircleCursor for all /home/* pages
+│       │       ├── page.tsx          ← homepage (countdown, parallax, floating nav)
+│       │       ├── zine/page.tsx     ← magazine/zine viewer page
+│       │       ├── jacket/           ← (planned) custom jacket page
+│       │       └── game/             ← (planned) mini-game page
 │       ├── components/
 │       │   ├── MatrixRain.tsx        ← full-screen red matrix rain canvas
 │       │   ├── Terminal.tsx          ← typewriter boot sequence + password input
-│       │   └── ZineViewer.tsx        ← 3D page-flip magazine viewer
+│       │   ├── ZineViewer.tsx        ← 3D page-flip magazine viewer
+│       │   └── CircleCursor.tsx      ← Destiny-style circle cursor (expands on hover)
 │       └── lib/
 │           └── auth.ts              ← plaintext password check ("itxc-2026")
 ├── backend/                          ← empty, may stay empty
@@ -56,9 +65,20 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
   - Plaintext password check — password is `itxc-2026` (case-insensitive, trimmed)
   - On success: `sessionStorage.gate1 = "open"`, redirect to `/home`
   - On fail: "ACCESS DENIED" flash, re-prompt
-- **Homepage `/home`** (placeholder):
-  - "INTOXICATED" title + temp "Enter Zine" button linking to `/home/zine`
+- **Homepage `/home`**:
+  - B&W opera hall / mansion staircase background image with darken overlay + vignette
+  - "ITXC" title in CloisterBlack (Chrome Hearts–style gothic font), red with glow
+  - Countdown timer to Sept 1st 2026 in same gothic font, large and bold, red glow
+  - DAYS / HRS / MIN / SEC labels in mono beneath each unit
+  - **Parallax mouse tracking** — content and background shift inversely to cursor movement (ICEMAN-style), smooth eased interpolation
+  - **Three floating nav buttons** at bottom: Zine (Digital Magazine), Jacket (Custom Piece), Game (Mini-Game) — frosted glass style with backdrop-blur, red gothic label + mono subtitle, hover effects
   - Auth guard: bounces to `/` if `sessionStorage.gate1` is not set
+- **Custom circle cursor** (Destiny-style):
+  - Small circle (16px) follows mouse with eased lag
+  - Expands to 48px when hovering over buttons, links, or `[data-hover]` elements
+  - Uses `mix-blend-difference` for visibility on any background
+  - Mounted via `/home/layout.tsx` — appears on all `/home/*` pages, NOT on Gate 1
+  - Native cursor hidden with `cursor-none` on all `/home/*` pages
 - **Zine page `/home/zine`**:
   - 44-page magazine viewer with placeholder pages (ready for S3 images)
   - Desktop: two-page spread view (≥768px), single page on mobile
@@ -72,21 +92,24 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
   - Auth guard: same as homepage
 
 ### Next (priority order)
-1. **Homepage `/home` design** — black-and-white empty opera hall background, countdown timer in Chrome Hearts–style font (red), hyperlinks to zine / minigame / Instagram / etc.
-2. **Gate 2** — second puzzle, themed to *Intoxicated* (heavier than gate 1). Unlocks the magazine. Server-validated.
-3. **Zine S3 integration** — swap placeholder pages for real images fetched from AWS S3 via pre-signed URLs. Lazy-load current + next 2 spreads.
-4. **Minigame** — deferred, design TBD.
-5. **Floating merch element** — CN Tower live-feed style, likely react-three-fiber.
-6. **Hidden messages / easter eggs** — console.log, hover reveals, secret routes.
+1. **Jacket page `/home/jacket`** — custom ITXC jacket showcase/configurator. Design TBD.
+2. **Mini-game page `/home/game`** — deferred, design TBD.
+3. **Gate 2** — second puzzle, themed to *Intoxicated* (heavier than gate 1). Unlocks the magazine. Server-validated.
+4. **Zine S3 integration** — swap placeholder pages for real images fetched from AWS S3 via pre-signed URLs. Lazy-load current + next 2 spreads.
+5. **Homepage polish** — additional decorative elements, animations, responsive fine-tuning.
+6. **Floating merch element** — CN Tower live-feed style, likely react-three-fiber.
+7. **Hidden messages / easter eggs** — console.log, hover reveals, secret routes.
 
 ## Key decisions & tradeoffs
 
 - **Gate 1 is client-side on purpose.** Password lives in `src/lib/auth.ts` as plaintext. The homepage isn't truly secret — it's an atmospheric door. Real secrets (the magazine) go behind server-validated gate 2.
-- **No hashing on gate 1.** SHA-256 was originally used but removed — adds complexity without real security since it's client-side. Plaintext comparison is simpler and intentional.
+- **No hashing on gate 1.** SHA-256 was originally used but removed — adds complexity without real security since it's client-side.
 - **Custom page-flip over react-pageflip.** Built a custom 3D flip with CSS transforms + pointer events — no extra dependency, full control over animation and drag behavior.
-- **Chrome Hearts proper font is proprietary.** Substitutes: UnifrakturMaguntia, MedievalSharp, Cloister Black (paid). Body pairing TBD — likely brutalist sans.
-- **Countdown date is config-driven** (release not finalized, July–Aug target). Env var or config file.
-- **Image protection plan**: private S3 bucket + pre-signed URLs with short TTL, re-signed as the user flips. Don't ship the magazine to the client without server gate.
+- **CloisterBlack font for Chrome Hearts aesthetic.** Loaded via `@font-face` in `globals.css`, available as `font-gothic` Tailwind class. From fontyfonts.com (free with attribution for commercial use).
+- **Parallax is mouse-only.** On mobile/touch, the parallax offset stays at 0 (no `mousemove` events). This is intentional — touch parallax via gyroscope is a future consideration.
+- **Circle cursor mounted at `/home/layout.tsx`** so it appears on all authenticated pages but NOT on the Gate 1 password page, where the terminal aesthetic uses its own cursor style.
+- **Release date is Sept 1st 2026** — hardcoded in `home/page.tsx` as `RELEASE_DATE`. Change there when the date firms up.
+- **Image protection plan**: private S3 bucket + pre-signed URLs with short TTL, re-signed as the user flips.
 - **No DRM.** Can't prevent screenshots, won't try.
 
 ## Conventions
@@ -96,20 +119,24 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
 - Shared logic / hooks → `src/lib/`
 - Routes → `src/app/`
 - Path alias `@/*` → `src/*`
-- Mono font for terminal/hacker UI; Chrome Hearts–alt only on `/home` and downstream
+- `font-gothic` = CloisterBlack (Chrome Hearts alt) — used on `/home` and downstream for titles/countdown
+- `font-mono` = Geist Mono — used for terminal UI, labels, body text
 - Tailwind for styling unless something truly needs a CSS module
 - VHS texture (scanlines + grain + vignette) on zine page; matrix rain on gate 1
+- `cursor-none` + CircleCursor on all `/home/*` pages
 
 ## References
 
-- Drake's *Iceman* site by Low Battery (Toronto agency) — overall blueprint
+- Drake's *Iceman* site by Low Battery (Toronto agency) — overall blueprint, parallax mouse tracking
 - *Iceman* zine: 44 hidden-message images → direct format inspo for our zine
+- Destiny / Destiny 2 UI — circle cursor that expands on interactive elements
 - "Iceman / Low Battery" aesthetic for floating merch element
 
 ## Notes for future sessions
 
-- **Keep this file updated as decisions land.** Especially: backend choice, fonts chosen, deploy target firmed up, release date when set, font files added.
+- **Keep this file updated as decisions land.** Especially: backend choice, fonts chosen, deploy target firmed up, release date changes, new pages added.
 - The friend's first book is the source for gate 1's missing-word puzzle. Gate 2 should pull from *Intoxicated* itself.
-- When patterns worth saving emerge (pre-signed URL flow, password gating, page-flip lazy-load), suggest a wiki entry for the Obsidian LLM wiki — `raw/` for source, `wiki/` for the synthesized page.
+- When patterns worth saving emerge (pre-signed URL flow, password gating, page-flip lazy-load), suggest a wiki entry for the Obsidian LLM wiki.
 - Do not commit the password to a public repo if the puzzle answer is sensitive. For gate 1 it's fine; for gate 2 the secret lives server-side only.
 - The zine viewer uses `sessionStorage` for auth — refreshing the zine page will bounce back to `/` since sessionStorage persists per tab but the gate check runs on mount.
+- The CircleCursor uses `mix-blend-difference` — it inverts colors underneath. On pure black backgrounds the cursor border may be invisible; consider adding a subtle background tint if this becomes an issue.
