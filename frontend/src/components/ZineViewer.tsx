@@ -243,11 +243,7 @@ export default function ZineViewer() {
             aspectRatio: isWide ? "1.5 / 1" : "0.75 / 1",
             maxHeight: "75vh",
             perspective: "1800px",
-            cursor: animating
-              ? "default"
-              : dragRef.current.active
-                ? "grabbing"
-                : "grab",
+            cursor: "none",
           }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
