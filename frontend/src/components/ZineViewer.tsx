@@ -1,22 +1,53 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useTheme } from "@/lib/theme";
 
-const TOTAL_PAGES = 44;
+const TOTAL_PAGES = 64;
 const DRAG_THRESHOLD = 80;
 
-function PlaceholderPage({ pageNum }: { pageNum: number }) {
+function ZinePage({ pageNum }: { pageNum: number }) {
   return (
-    <div className="absolute inset-0 bg-zinc-900 flex flex-col items-center justify-center select-none">
-      <span className="text-red-600/40 text-6xl font-bold">{pageNum}</span>
-      <span className="text-zinc-600 text-sm mt-2 tracking-widest uppercase">
-        Page {pageNum} of {TOTAL_PAGES}
-      </span>
+    <div className="absolute inset-0 bg-black select-none overflow-hidden">
+      <img
+        src={`/images/zine/page-${pageNum}.png`}
+        alt={`Page ${pageNum}`}
+        className="w-full h-full object-contain"
+        draggable={false}
+        style={{
+          filter: "contrast(1.1) brightness(0.95) saturate(0.85)",
+        }}
+      />
+      {/* Scanlines */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.06]"
+        style={{
+          background:
+            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.04) 2px, rgba(255,255,255,0.04) 4px)",
+        }}
+      />
+      {/* Noise grain */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.12] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        }}
+      />
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%)",
+        }}
+      />
     </div>
   );
 }
 
 export default function ZineViewer() {
+  const { hex } = useTheme();
   const [currentPage, setCurrentPage] = useState(0);
   const [isWide, setIsWide] = useState(false);
   const [flipProgress, setFlipProgress] = useState(0);
@@ -88,6 +119,61 @@ export default function ZineViewer() {
 
   const goNext = useCallback(() => animateFlip("next"), [animateFlip]);
   const goPrev = useCallback(() => animateFlip("prev"), [animateFlip]);
+
+  const rapidFlip = useCallback(
+    (target: number) => {
+      if (animating) return;
+      const step = isWide ? 2 : 1;
+      const flipsNeeded = Math.abs(target - currentPage) / step;
+      if (flipsNeeded === 0) return;
+
+      const perFlip = Math.max(60, Math.min(300, 1500 / flipsNeeded));
+      const direction: "next" | "prev" = target > currentPage ? "next" : "prev";
+
+      setAnimating(true);
+
+      let page = currentPage;
+
+      function doOneFlip() {
+        if ((direction === "next" && page >= target) ||
+            (direction === "prev" && page <= target)) {
+          setFlipProgress(0);
+          setIsFlipping(false);
+          setFlipDirection(null);
+          setAnimating(false);
+          return;
+        }
+
+        setFlipDirection(direction);
+        setIsFlipping(true);
+
+        let start: number | null = null;
+
+        function tick(ts: number) {
+          if (!start) start = ts;
+          const t = Math.min((ts - start) / perFlip, 1);
+          const eased = t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+          setFlipProgress(eased);
+
+          if (t < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            page = direction === "next"
+              ? Math.min(page + step, target)
+              : Math.max(page - step, target);
+            setCurrentPage(page);
+            setFlipProgress(0);
+            requestAnimationFrame(doOneFlip);
+          }
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(doOneFlip);
+    },
+    [animating, currentPage, isWide]
+  );
 
   // Keyboard
   useEffect(() => {
@@ -255,39 +341,47 @@ export default function ZineViewer() {
             className={`absolute inset-0 grid ${isWide ? "grid-cols-2" : "grid-cols-1"} gap-0`}
           >
             <div className="relative overflow-hidden bg-black border border-zinc-800">
-              <PlaceholderPage pageNum={leftPage} />
+              <ZinePage pageNum={leftPage} />
             </div>
             {isWide && rightPage <= TOTAL_PAGES && (
               <div className="relative overflow-hidden bg-black border border-zinc-800">
-                <PlaceholderPage pageNum={rightPage} />
+                <ZinePage pageNum={rightPage} />
               </div>
             )}
           </div>
 
-          {/* ========== REVEAL LAYER: next/prev spread underneath the flip ========== */}
+          {/* ========== REVEAL LAYER: what's underneath the flipping page ========== */}
           {isFlipping && flipDirection && (
             <div
               className={`absolute inset-0 grid ${isWide ? "grid-cols-2" : "grid-cols-1"} gap-0`}
             >
               {flipDirection === "next" ? (
                 <>
+                  {/* Left side stays as current left page during next-flip */}
                   <div className="relative overflow-hidden bg-black border border-zinc-800">
-                    <PlaceholderPage pageNum={nextLeftPage} />
+                    <ZinePage pageNum={leftPage} />
                   </div>
                   {isWide && nextRightPage <= TOTAL_PAGES && (
                     <div className="relative overflow-hidden bg-black border border-zinc-800">
-                      <PlaceholderPage pageNum={nextRightPage} />
+                      <ZinePage pageNum={nextRightPage} />
                     </div>
                   )}
                 </>
               ) : (
                 <>
-                  <div className="relative overflow-hidden bg-black border border-zinc-800">
-                    <PlaceholderPage pageNum={prevLeftPage} />
-                  </div>
-                  {isWide && prevRightPage <= TOTAL_PAGES && (
+                  {isWide ? (
+                    <>
+                      <div className="relative overflow-hidden bg-black border border-zinc-800">
+                        <ZinePage pageNum={prevLeftPage} />
+                      </div>
+                      {/* Right side stays as current right page during prev-flip */}
+                      <div className="relative overflow-hidden bg-black border border-zinc-800">
+                        <ZinePage pageNum={rightPage} />
+                      </div>
+                    </>
+                  ) : (
                     <div className="relative overflow-hidden bg-black border border-zinc-800">
-                      <PlaceholderPage pageNum={prevRightPage} />
+                      <ZinePage pageNum={prevLeftPage} />
                     </div>
                   )}
                 </>
@@ -314,7 +408,7 @@ export default function ZineViewer() {
                 className="absolute inset-0"
                 style={{ backfaceVisibility: "hidden" }}
               >
-                <PlaceholderPage
+                <ZinePage
                   pageNum={isWide ? rightPage : leftPage}
                 />
               </div>
@@ -326,7 +420,7 @@ export default function ZineViewer() {
                   transform: "rotateY(180deg)",
                 }}
               >
-                <PlaceholderPage pageNum={nextLeftPage} />
+                <ZinePage pageNum={nextLeftPage} />
               </div>
               {/* Shadow on the flipping page */}
               <div
@@ -357,7 +451,7 @@ export default function ZineViewer() {
                 className="absolute inset-0"
                 style={{ backfaceVisibility: "hidden" }}
               >
-                <PlaceholderPage pageNum={leftPage} />
+                <ZinePage pageNum={leftPage} />
               </div>
               {/* Back face: prev right page */}
               <div
@@ -367,7 +461,7 @@ export default function ZineViewer() {
                   transform: "rotateY(-180deg)",
                 }}
               >
-                <PlaceholderPage
+                <ZinePage
                   pageNum={isWide ? prevRightPage : prevLeftPage}
                 />
               </div>
@@ -383,26 +477,15 @@ export default function ZineViewer() {
             </div>
           )}
 
-          {/* ========== Spine shadow cast during flip ========== */}
-          {isFlipping && (
+          {/* ========== Spine crease — fades in during flip ========== */}
+          {isWide && (
             <div
-              className="absolute inset-y-0 pointer-events-none"
+              className="absolute inset-y-0 left-1/2 -translate-x-1/2 pointer-events-none z-25 transition-opacity duration-300"
               style={{
-                left: isWide ? "calc(50% - 20px)" : 0,
                 width: "40px",
-                background: `linear-gradient(90deg, rgba(0,0,0,${0.5 * Math.sin((angle * Math.PI) / 180)}) 0%, transparent 50%, rgba(0,0,0,${0.5 * Math.sin((angle * Math.PI) / 180)}) 100%)`,
-                zIndex: 25,
-              }}
-            />
-          )}
-
-          {/* ========== Static spine shadow ========== */}
-          {isWide && !isFlipping && (
-            <div
-              className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-6 pointer-events-none z-20"
-              style={{
                 background:
-                  "linear-gradient(90deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.4) 100%)",
+                  "linear-gradient(90deg, rgba(0,0,0,0.45) 0%, transparent 40%, transparent 60%, rgba(0,0,0,0.45) 100%)",
+                opacity: isFlipping ? 1 : 0,
               }}
             />
           )}
@@ -419,11 +502,23 @@ export default function ZineViewer() {
       </div>
 
       {/* Controls */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 sm:gap-6">
+        <button
+          onClick={() => rapidFlip(0)}
+          disabled={atStart || animating}
+          data-hover
+          className="px-3 py-2.5 border text-sm font-mono uppercase tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: hex, borderColor: `${hex}40` }}
+        >
+          ««
+        </button>
+
         <button
           onClick={goPrev}
           disabled={atStart || animating}
-          className="px-5 py-2.5 border border-red-900/60 text-red-500 text-sm font-mono uppercase tracking-widest transition-all hover:bg-red-900/20 hover:border-red-700/60 disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-red-900/60"
+          data-hover
+          className="px-4 py-2.5 border text-sm font-mono uppercase tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: hex, borderColor: `${hex}40` }}
         >
           Prev
         </button>
@@ -437,9 +532,21 @@ export default function ZineViewer() {
         <button
           onClick={goNext}
           disabled={atEnd || animating}
-          className="px-5 py-2.5 border border-red-900/60 text-red-500 text-sm font-mono uppercase tracking-widest transition-all hover:bg-red-900/20 hover:border-red-700/60 disabled:opacity-20 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-red-900/60"
+          data-hover
+          className="px-4 py-2.5 border text-sm font-mono uppercase tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: hex, borderColor: `${hex}40` }}
         >
           Next
+        </button>
+
+        <button
+          onClick={() => rapidFlip(maxPage)}
+          disabled={atEnd || animating}
+          data-hover
+          className="px-3 py-2.5 border text-sm font-mono uppercase tracking-widest transition-all disabled:opacity-20 disabled:cursor-not-allowed"
+          style={{ color: hex, borderColor: `${hex}40` }}
+        >
+          »»
         </button>
       </div>
     </div>
