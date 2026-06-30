@@ -44,7 +44,6 @@ export default function CircleCursor() {
 
     let raf: number;
     function tick() {
-      // Much faster interpolation for responsiveness
       pos.current.x += (target.current.x - pos.current.x) * 0.45;
       pos.current.y += (target.current.y - pos.current.y) * 0.45;
       if (cursorRef.current) {
@@ -63,24 +62,64 @@ export default function CircleCursor() {
     };
   }, [visible]);
 
+  const outerClass = `circle-cursor ${hovering ? "circle-cursor--hover" : ""}`;
+  const innerClass = `circle-cursor__ring ${hovering ? "circle-cursor__ring--visible" : ""}`;
+
   return (
-    <div
-      ref={cursorRef}
-      className="fixed top-0 left-0 pointer-events-none z-[9999]"
-      style={{
-        width: hovering ? "56px" : "28px",
-        height: hovering ? "56px" : "28px",
-        borderRadius: "50%",
-        border: hovering
-          ? "2px solid rgba(255, 60, 60, 0.8)"
-          : "1.5px solid rgba(255, 255, 255, 0.7)",
-        backgroundColor: hovering
-          ? "rgba(255, 0, 0, 0.08)"
-          : "transparent",
-        transition:
-          "width 0.2s ease, height 0.2s ease, background-color 0.2s ease, border 0.2s ease",
-        opacity: visible ? 1 : 0,
-      }}
-    />
+    <>
+      <style>{`
+        @keyframes cursor-spin { to { transform: rotate(360deg); } }
+
+        .circle-cursor {
+          position: fixed;
+          top: 0;
+          left: 0;
+          pointer-events: none;
+          z-index: 9999;
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(255, 255, 255, 0.7);
+          background-color: transparent;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease,
+            border-width 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .circle-cursor--hover {
+          width: 56px;
+          height: 56px;
+          border: 2px solid rgba(255, 60, 60, 0.35);
+          background-color: rgba(255, 20, 20, 0.85);
+        }
+
+        .circle-cursor__ring {
+          width: 0px;
+          height: 0px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(255, 200, 200, 0.5);
+          border-top-color: transparent;
+          border-bottom-color: transparent;
+          animation: cursor-spin 3s linear infinite;
+          transition: width 0.25s ease, height 0.25s ease, opacity 0.2s ease;
+          opacity: 0;
+        }
+
+        .circle-cursor__ring--visible {
+          width: 28px;
+          height: 28px;
+          opacity: 1;
+        }
+      `}</style>
+      <div
+        ref={cursorRef}
+        className={outerClass}
+        style={{ opacity: visible ? 1 : 0 }}
+      >
+        <div className={innerClass} />
+      </div>
+    </>
   );
 }
