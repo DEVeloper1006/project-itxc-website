@@ -12,7 +12,7 @@ export default function KrisFlash({
   const [visible, setVisible] = useState(false);
   const [glitchX, setGlitchX] = useState(0);
   const [isMobile, setIsMobile] = useState(true);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     function check() {
@@ -36,7 +36,11 @@ export default function KrisFlash({
 
     // Offset from Scarface flash (starts at 2s) — start at 4.5s
     timeoutRef.current = setTimeout(trigger, 4500);
-    return () => clearTimeout(timeoutRef.current);
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, [isMobile, interval]);
 
   if (isMobile || !visible) return null;

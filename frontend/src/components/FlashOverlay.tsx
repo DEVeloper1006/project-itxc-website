@@ -20,7 +20,7 @@ export default function FlashOverlay({
     glitchX: number;
   } | null>(null);
   const [isMobile, setIsMobile] = useState(true);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   useEffect(() => {
     function check() {
