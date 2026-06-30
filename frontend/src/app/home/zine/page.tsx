@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import ZineViewer from "@/components/ZineViewer";
 import RedParticles from "@/components/RedParticles";
+import ColorPicker from "@/components/ColorPicker";
 import { useTheme } from "@/lib/theme";
 
 export default function ZinePage() {
@@ -22,6 +23,7 @@ export default function ZinePage() {
 
   return (
     <div className="relative min-h-screen bg-black flex flex-col overflow-hidden cursor-none">
+      <ColorPicker />
       {/* VHS scanline overlay */}
       <div
         className="fixed inset-0 pointer-events-none z-50"
