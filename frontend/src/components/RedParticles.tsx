@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/lib/theme";
 
 const CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
 const FONT_SIZES = [10, 12, 14, 16];
@@ -8,6 +9,9 @@ const MAX_DROPS = 350;
 
 export default function RedParticles() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const { hex, r, g, b } = useTheme();
+  const colorRef = useRef({ hex, r, g, b });
+  colorRef.current = { hex, r, g, b };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,6 +44,7 @@ export default function RedParticles() {
     let raf: number;
     function draw() {
       ctx.clearRect(0, 0, w, h);
+      const { hex: col, r: cr, g: cg, b: cb } = colorRef.current;
 
       for (let i = 0; i < MAX_DROPS; i++) {
         y[i] += speed[i];
@@ -60,9 +65,9 @@ export default function RedParticles() {
 
         ctx.font = `${fs}px monospace`;
         ctx.globalAlpha = a * 0.4;
-        ctx.shadowColor = "#ff0000";
+        ctx.shadowColor = col;
         ctx.shadowBlur = fs;
-        ctx.fillStyle = "#ff2020";
+        ctx.fillStyle = `rgb(${cr}, ${cg}, ${cb})`;
         ctx.fillText(ch, x[i], y[i]);
 
         ctx.shadowBlur = 0;

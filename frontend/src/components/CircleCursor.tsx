@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/lib/theme";
 
 export default function CircleCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -8,6 +9,7 @@ export default function CircleCursor() {
   const target = useRef({ x: -100, y: -100 });
   const [hovering, setHovering] = useState(false);
   const [visible, setVisible] = useState(false);
+  const { hex } = useTheme();
 
   useEffect(() => {
     function onMove(e: MouseEvent) {
@@ -91,15 +93,15 @@ export default function CircleCursor() {
         .circle-cursor--hover {
           width: 56px;
           height: 56px;
-          border: 2px solid rgba(255, 60, 60, 0.35);
-          background-color: rgba(255, 20, 20, 0.85);
+          border: 2px solid var(--accent-cursor-border, rgba(255, 60, 60, 0.35));
+          background-color: var(--accent-cursor-bg, rgba(255, 20, 20, 0.85));
         }
 
         .circle-cursor__ring {
           width: 0px;
           height: 0px;
           border-radius: 50%;
-          border: 1.5px solid rgba(255, 200, 200, 0.5);
+          border: 1.5px solid var(--accent-cursor-ring, rgba(255, 200, 200, 0.5));
           border-top-color: transparent;
           border-bottom-color: transparent;
           animation: cursor-spin 3s linear infinite;
@@ -116,7 +118,12 @@ export default function CircleCursor() {
       <div
         ref={cursorRef}
         className={outerClass}
-        style={{ opacity: visible ? 1 : 0 }}
+        style={{
+          opacity: visible ? 1 : 0,
+          ["--accent-cursor-border" as string]: `${hex}59`,
+          ["--accent-cursor-bg" as string]: `${hex}d9`,
+          ["--accent-cursor-ring" as string]: `${hex}80`,
+        }}
       >
         <div className={innerClass} />
       </div>

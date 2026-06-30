@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { getStoredColor } from "@/lib/theme";
 
 const CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
 const LOAD_DURATION = 3500;
@@ -31,6 +32,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
   const startTime = useRef(Date.now());
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
+  const accent = useRef(getStoredColor());
 
   // Minimal matrix rain
   useEffect(() => {
@@ -53,7 +55,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       for (let i = 0; i < cols; i++) {
         const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
         const a = 0.15 + Math.random() * 0.15;
-        ctx.fillStyle = `rgba(255, 30, 30, ${a})`;
+        ctx.fillStyle = `rgba(${accent.current.r}, ${accent.current.g}, ${accent.current.b}, ${a})`;
         ctx.fillText(ch, i * 18, drops[i]);
         drops[i] += 12 + Math.random() * 4;
         if (drops[i] > h) drops[i] = Math.random() * -100;
@@ -183,16 +185,20 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       {/* Center content */}
       <div className="relative z-10 flex flex-col items-center gap-6">
         <h1
-          className="font-gothic text-red-600 text-5xl sm:text-6xl md:text-7xl tracking-wide"
+          className="font-gothic text-5xl sm:text-6xl md:text-7xl tracking-wide"
           style={{
+            color: accent.current.hex,
             textShadow:
-              "0 0 20px rgba(255, 0, 0, 0.6), 0 0 40px rgba(255, 0, 0, 0.3)",
+              `0 0 20px ${accent.current.hex}99, 0 0 40px ${accent.current.hex}4d`,
           }}
         >
           ITXC
         </h1>
 
-        <p className="font-mono text-red-500/70 text-xs sm:text-sm tracking-[0.3em] h-5">
+        <p
+          className="font-mono text-xs sm:text-sm tracking-[0.3em] h-5"
+          style={{ color: `${accent.current.hex}b3` }}
+        >
           {scrambledText}
         </p>
       </div>
@@ -200,19 +206,26 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
       {/* Bottom loading bar */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center px-6 pb-2">
-          <span className="font-mono text-red-500/50 text-[10px] tracking-[0.2em]">
+          <span
+            className="font-mono text-[10px] tracking-[0.2em]"
+            style={{ color: `${accent.current.hex}80` }}
+          >
             {GLITCH_LINES[activeLine]}
           </span>
-          <span className="font-mono text-red-500/60 text-xs tabular-nums">
+          <span
+            className="font-mono text-xs tabular-nums"
+            style={{ color: `${accent.current.hex}99` }}
+          >
             {Math.floor(progress * 100)}%
           </span>
         </div>
-        <div className="h-[2px] bg-red-900/30 w-full">
+        <div className="h-[2px] w-full" style={{ backgroundColor: `${accent.current.hex}1a` }}>
           <div
-            className="h-full bg-red-600 transition-none"
+            className="h-full transition-none"
             style={{
               width: `${progress * 100}%`,
-              boxShadow: "0 0 12px rgba(255, 0, 0, 0.6), 0 0 4px rgba(255, 0, 0, 0.8)",
+              backgroundColor: accent.current.hex,
+              boxShadow: `0 0 12px ${accent.current.hex}99, 0 0 4px ${accent.current.hex}cc`,
             }}
           />
         </div>

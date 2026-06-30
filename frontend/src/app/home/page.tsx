@@ -7,8 +7,9 @@ import LoadingScreen from "@/components/LoadingScreen";
 import PreviewScroller from "@/components/PreviewScroller";
 import FlashOverlay from "@/components/FlashOverlay";
 import KrisFlash from "@/components/KrisFlash";
+import { useTheme } from "@/lib/theme";
 
-const RELEASE_DATE = new Date("2026-09-01T00:00:00");
+const RELEASE_DATE = new Date("2026-09-18T00:00:00");
 
 function useCountdown() {
   const [timeLeft, setTimeLeft] = useState(getTimeLeft());
@@ -74,8 +75,12 @@ function useParallax(strength: number = 20) {
   return offset;
 }
 
-// Placeholder arrays — swap with S3 pre-signed URLs via /api/previews later
-const ZINE_PREVIEWS = ["", "", "", ""];
+const ZINE_PREVIEWS = [
+  "/images/zine/page-1.png",
+  "/images/zine/page-10.png",
+  "/images/zine/page-25.png",
+  "/images/zine/page-40.png",
+];
 const JACKET_PREVIEWS = ["", "", ""];
 
 const NAV_ITEMS = [
@@ -111,6 +116,7 @@ export default function Home() {
   const countdown = useCountdown();
   const parallax = useParallax(25);
   const bgParallax = useParallax(10);
+  const { hex } = useTheme();
 
   useEffect(() => {
     if (sessionStorage.getItem("gate1") !== "open") {
@@ -137,7 +143,7 @@ export default function Home() {
         }}
       />
       {/* Flashing image overlays — desktop only, behind everything */}
-      <FlashOverlay interval={5000} flashDuration={130} />
+      <FlashOverlay interval={5000} holdDuration={130} />
       <KrisFlash interval={7000} />
       {/* Darken overlay */}
       <div className="absolute inset-0 bg-black/50" />
@@ -161,24 +167,25 @@ export default function Home() {
       >
         {/* Title */}
         <h1
-          className="font-gothic text-red-600 text-6xl sm:text-7xl md:text-8xl tracking-wide"
+          className="font-gothic text-6xl sm:text-7xl md:text-8xl tracking-wide"
           style={{
+            color: hex,
             textShadow:
-              "0 0 20px rgba(255, 0, 0, 0.6), 0 0 40px rgba(255, 0, 0, 0.3), 0 0 80px rgba(255, 0, 0, 0.15)",
+              `0 0 20px ${hex}99, 0 0 40px ${hex}4d, 0 0 80px ${hex}26`,
           }}
         >
-          ITXC
+          INTOXICATED
         </h1>
 
         {/* Countdown */}
         <div className="flex items-baseline gap-2 sm:gap-3 md:gap-4">
-          <CountdownUnit value={countdown.days} label="DAYS" />
-          <Separator />
-          <CountdownUnit value={countdown.hours} label="HRS" />
-          <Separator />
-          <CountdownUnit value={countdown.minutes} label="MIN" />
-          <Separator />
-          <CountdownUnit value={countdown.seconds} label="SEC" />
+          <CountdownUnit value={countdown.days} label="DAYS" hex={hex} />
+          <Separator hex={hex} />
+          <CountdownUnit value={countdown.hours} label="HRS" hex={hex} />
+          <Separator hex={hex} />
+          <CountdownUnit value={countdown.minutes} label="MIN" hex={hex} />
+          <Separator hex={hex} />
+          <CountdownUnit value={countdown.seconds} label="SEC" hex={hex} />
         </div>
 
         {/* Mobile nav — vertical stack, visible only below md */}
@@ -188,15 +195,16 @@ export default function Home() {
               key={item.href}
               href={item.href}
               data-hover
-              className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 hover:border-red-500/50 transition-all duration-300"
+              className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300"
+              style={{ ["--item-accent" as string]: hex }}
             >
               {item.previews && (
                 <PreviewScroller images={item.previews} />
               )}
               <div className="flex flex-col items-center gap-1 px-5 py-3">
                 <span
-                  className="font-gothic text-red-500 text-2xl group-hover:text-red-400 transition-colors"
-                  style={{ textShadow: "0 0 12px rgba(255, 0, 0, 0.4)" }}
+                  className="font-gothic text-2xl transition-colors"
+                  style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
                 >
                   {item.label}
                 </span>
@@ -215,7 +223,7 @@ export default function Home() {
           key={item.href}
           href={item.href}
           data-hover
-          className="hidden md:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 hover:border-red-500/50 transition-all duration-300 will-change-transform"
+          className="hidden md:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform"
           style={{
             ...item.position,
             width: item.previews ? "220px" : undefined,
@@ -227,9 +235,10 @@ export default function Home() {
           )}
           <div className="flex flex-col items-center gap-1 px-6 py-4">
             <span
-              className="font-gothic text-red-500 text-3xl md:text-4xl group-hover:text-red-400 transition-colors"
+              className="font-gothic text-3xl md:text-4xl transition-colors"
               style={{
-                textShadow: "0 0 12px rgba(255, 0, 0, 0.4)",
+                color: hex,
+                textShadow: `0 0 12px ${hex}66`,
               }}
             >
               {item.label}
@@ -244,14 +253,15 @@ export default function Home() {
   );
 }
 
-function CountdownUnit({ value, label }: { value: number; label: string }) {
+function CountdownUnit({ value, label, hex }: { value: number; label: string; hex: string }) {
   return (
     <div className="flex flex-col items-center">
       <span
-        className="font-gothic text-red-600 text-5xl sm:text-7xl md:text-9xl leading-none tabular-nums"
+        className="font-gothic text-5xl sm:text-7xl md:text-9xl leading-none tabular-nums"
         style={{
+          color: hex,
           textShadow:
-            "0 0 15px rgba(255, 0, 0, 0.5), 0 0 30px rgba(255, 0, 0, 0.25), 0 0 60px rgba(255, 0, 0, 0.1)",
+            `0 0 15px ${hex}80, 0 0 30px ${hex}40, 0 0 60px ${hex}1a`,
         }}
       >
         {pad(value)}
@@ -263,12 +273,13 @@ function CountdownUnit({ value, label }: { value: number; label: string }) {
   );
 }
 
-function Separator() {
+function Separator({ hex }: { hex: string }) {
   return (
     <span
-      className="font-gothic text-red-600/70 text-4xl sm:text-6xl md:text-8xl leading-none self-start mt-1 sm:mt-2"
+      className="font-gothic text-4xl sm:text-6xl md:text-8xl leading-none self-start mt-1 sm:mt-2"
       style={{
-        textShadow: "0 0 15px rgba(255, 0, 0, 0.4)",
+        color: `${hex}b3`,
+        textShadow: `0 0 15px ${hex}66`,
       }}
     >
       :

@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTheme } from "@/lib/theme";
 
 interface PreviewScrollerProps {
   images: string[];
   interval?: number;
 }
 
-function PlaceholderSlide({ index }: { index: number }) {
+function PlaceholderSlide({ index, hex }: { index: number; hex: string }) {
   return (
     <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
-      <span className="text-red-600/30 text-3xl font-bold">{index + 1}</span>
+      <span className="text-3xl font-bold" style={{ color: `${hex}4d` }}>{index + 1}</span>
     </div>
   );
 }
@@ -19,6 +20,7 @@ export default function PreviewScroller({
   images,
   interval = 2500,
 }: PreviewScrollerProps) {
+  const { hex } = useTheme();
   const [active, setActive] = useState(0);
   const count = images.length;
 
@@ -52,13 +54,16 @@ export default function PreviewScroller({
               loading="lazy"
             />
           ) : (
-            <PlaceholderSlide index={i} />
+            <PlaceholderSlide index={i} hex={hex} />
           )}
         </div>
       ))}
 
-      {/* Red tint overlay */}
-      <div className="absolute inset-0 bg-red-900/15 mix-blend-overlay pointer-events-none" />
+      {/* Tint overlay */}
+      <div
+        className="absolute inset-0 mix-blend-overlay pointer-events-none"
+        style={{ backgroundColor: `${hex}26` }}
+      />
 
       {/* Scanline texture */}
       <div
@@ -77,7 +82,7 @@ export default function PreviewScroller({
             className="w-1 h-1 rounded-full transition-colors duration-300"
             style={{
               backgroundColor:
-                i === active ? "rgba(255, 60, 60, 0.8)" : "rgba(255, 255, 255, 0.25)",
+                i === active ? `${hex}cc` : "rgba(255, 255, 255, 0.25)",
             }}
           />
         ))}

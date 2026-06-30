@@ -3,9 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import ZineViewer from "@/components/ZineViewer";
+import RedParticles from "@/components/RedParticles";
+import { useTheme } from "@/lib/theme";
 
 export default function ZinePage() {
   const [authorized, setAuthorized] = useState(false);
+  const { hex } = useTheme();
 
   useEffect(() => {
     if (sessionStorage.getItem("gate1") !== "open") {
@@ -35,6 +38,8 @@ export default function ZinePage() {
           backgroundSize: "150px 150px",
         }}
       />
+      {/* Red katakana particles */}
+      <RedParticles />
       {/* VHS vignette */}
       <div
         className="fixed inset-0 pointer-events-none z-50"
@@ -44,7 +49,7 @@ export default function ZinePage() {
       />
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-red-900/30">
+      <header className="relative z-10 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-red-900/30">
         <Link
           href="/home"
           className="text-zinc-500 text-xs font-mono uppercase tracking-widest hover:text-red-500 transition-colors flex items-center gap-2"
@@ -53,7 +58,10 @@ export default function ZinePage() {
           <span>Back</span>
         </Link>
 
-        <h1 className="text-red-600 text-sm sm:text-base font-mono font-bold tracking-[0.3em] uppercase">
+        <h1
+          className="text-sm sm:text-base font-mono font-bold tracking-[0.3em] uppercase"
+          style={{ color: hex }}
+        >
           Intoxicated Zine
         </h1>
 
@@ -61,7 +69,7 @@ export default function ZinePage() {
       </header>
 
       {/* Viewer */}
-      <div className="flex-1 flex flex-col pt-4 sm:pt-6">
+      <div className="relative z-10 flex-1 flex flex-col pt-4 sm:pt-6">
         <ZineViewer />
       </div>
     </div>
