@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import RedParticles from "@/components/RedParticles";
 
 const RELEASE_DATE = new Date("2026-09-01T00:00:00");
 
@@ -124,6 +125,8 @@ export default function Home() {
       />
       {/* Darken overlay */}
       <div className="absolute inset-0 bg-black/50" />
+      {/* Red particles */}
+      <RedParticles />
       {/* Vignette */}
       <div
         className="absolute inset-0"
