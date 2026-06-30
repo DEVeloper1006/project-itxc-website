@@ -7,6 +7,9 @@ import LoadingScreen from "@/components/LoadingScreen";
 import PreviewScroller from "@/components/PreviewScroller";
 import FlashOverlay from "@/components/FlashOverlay";
 import KrisFlash from "@/components/KrisFlash";
+import StatuesFlash from "@/components/StatuesFlash";
+import EyesFlash from "@/components/EyesFlash";
+import ColorPicker from "@/components/ColorPicker";
 import { useTheme } from "@/lib/theme";
 
 const RELEASE_DATE = new Date("2026-09-18T00:00:00");
@@ -91,6 +94,7 @@ const NAV_ITEMS = [
     position: { top: "55%", left: "5%" } as Record<string, string>,
     parallaxScale: 0.5,
     previews: ZINE_PREVIEWS,
+    external: false,
   },
   {
     label: "Jacket",
@@ -99,14 +103,16 @@ const NAV_ITEMS = [
     position: { top: "30%", right: "4%" } as Record<string, string>,
     parallaxScale: 0.7,
     previews: JACKET_PREVIEWS,
+    external: false,
   },
   {
-    label: "Game",
-    href: "/home/game",
-    description: "Mini-Game",
+    label: "Know Your Worth",
+    href: "https://www.amazon.ca/Know-Your-Worth-Kris-Gandhi/dp/B0DY69BWG4",
+    description: "Previous Book",
     position: { bottom: "6%", right: "18%" } as Record<string, string>,
     parallaxScale: 0.4,
     previews: null,
+    external: true,
   },
 ];
 
@@ -134,6 +140,7 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden cursor-none">
+      <ColorPicker />
       {/* Background image with parallax */}
       <div
         className="absolute -inset-10 bg-cover bg-center bg-no-repeat will-change-transform"
@@ -145,6 +152,8 @@ export default function Home() {
       {/* Flashing image overlays — desktop only, behind everything */}
       <FlashOverlay interval={5000} holdDuration={130} />
       <KrisFlash interval={7000} />
+      <StatuesFlash interval={6000} />
+      <EyesFlash interval={8000} />
       {/* Darken overlay */}
       <div className="absolute inset-0 bg-black/50" />
       {/* Red particles */}
@@ -157,6 +166,24 @@ export default function Home() {
             "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)",
         }}
       />
+
+      {/* Credit */}
+      <span
+        className="absolute top-4 left-4 z-10 font-gothic text-sm sm:text-base tracking-wide"
+        style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
+      >
+        Created By Dev Mody
+      </span>
+
+      {/* Issue info */}
+      <div
+        className="absolute top-4 right-4 z-10 font-gothic text-right text-sm sm:text-base leading-relaxed tracking-wide"
+        style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
+      >
+        <div>MR. TXC</div>
+        <div>ISSUE 01</div>
+        <div>FALL 2026</div>
+      </div>
 
       {/* Content with parallax */}
       <div
@@ -190,65 +217,74 @@ export default function Home() {
 
         {/* Mobile nav — vertical stack, visible only below md */}
         <div className="flex md:hidden flex-col items-center gap-4 mt-6 w-full max-w-xs">
-          {NAV_ITEMS.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              data-hover
-              className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300"
-              style={{ ["--item-accent" as string]: hex }}
-            >
-              {item.previews && (
-                <PreviewScroller images={item.previews} />
-              )}
-              <div className="flex flex-col items-center gap-1 px-5 py-3">
-                <span
-                  className="font-gothic text-2xl transition-colors"
-                  style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
-                >
-                  {item.label}
-                </span>
-                <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
-                  {item.description}
-                </span>
-              </div>
-            </Link>
-          ))}
+          {NAV_ITEMS.map((item) => {
+            const Tag = item.external ? "a" : Link;
+            const extra = item.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
+            return (
+              <Tag
+                key={item.href}
+                href={item.href}
+                data-hover
+                className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300"
+                {...extra}
+              >
+                {item.previews && (
+                  <PreviewScroller images={item.previews} />
+                )}
+                <div className="flex flex-col items-center gap-1 px-5 py-3">
+                  <span
+                    className="font-gothic text-2xl transition-colors"
+                    style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+                  >
+                    {item.label}
+                  </span>
+                  <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
+                    {item.description}
+                  </span>
+                </div>
+              </Tag>
+            );
+          })}
         </div>
       </div>
 
       {/* Desktop floating nav — scattered with individual parallax, hidden below md */}
-      {NAV_ITEMS.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          data-hover
-          className="hidden md:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform"
-          style={{
-            ...item.position,
-            width: item.previews ? "220px" : undefined,
-            transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
-          }}
-        >
-          {item.previews && (
-            <PreviewScroller images={item.previews} />
-          )}
-          <div className="flex flex-col items-center gap-1 px-6 py-4">
-            <span
-              className="font-gothic text-3xl md:text-4xl transition-colors"
-              style={{
-                color: hex,
-                textShadow: `0 0 12px ${hex}66`,
-              }}
-            >
-              {item.label}
-            </span>
-            <span className="text-zinc-400 text-xs font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
-              {item.description}
-            </span>
-          </div>
-        </Link>
-      ))}
+      {NAV_ITEMS.map((item) => {
+        const Tag = item.external ? "a" : Link;
+        const extra = item.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
+        return (
+          <Tag
+            key={item.href}
+            href={item.href}
+            data-hover
+            className="hidden md:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform"
+            style={{
+              ...item.position,
+              width: item.previews ? "280px" : "200px",
+              transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
+            }}
+            {...extra}
+          >
+            {item.previews && (
+              <PreviewScroller images={item.previews} />
+            )}
+            <div className="flex flex-col items-center gap-1.5 px-8 py-5">
+              <span
+                className="font-gothic text-4xl md:text-5xl transition-colors"
+                style={{
+                  color: hex,
+                  textShadow: `0 0 12px ${hex}66`,
+                }}
+              >
+                {item.label}
+              </span>
+              <span className="text-zinc-400 text-sm font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
+                {item.description}
+              </span>
+            </div>
+          </Tag>
+        );
+      })}
     </div>
   );
 }
@@ -266,7 +302,10 @@ function CountdownUnit({ value, label, hex }: { value: number; label: string; he
       >
         {pad(value)}
       </span>
-      <span className="text-zinc-400 text-[10px] sm:text-xs font-mono tracking-[0.3em] mt-1">
+      <span
+        className="text-[10px] sm:text-xs font-mono tracking-[0.3em] mt-1"
+        style={{ color: `${hex}99` }}
+      >
         {label}
       </span>
     </div>

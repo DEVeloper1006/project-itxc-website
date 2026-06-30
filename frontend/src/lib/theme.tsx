@@ -28,9 +28,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const { r, g, b } = hexToRgb(hex);
 
   useEffect(() => {
-    const stored = localStorage.getItem("itxc-accent");
-    if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
-      setHex(stored);
+    const navType = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const isReload = navType?.type === "reload";
+    if (isReload) {
+      sessionStorage.removeItem("itxc-accent");
+    } else {
+      const stored = sessionStorage.getItem("itxc-accent");
+      if (stored && /^#[0-9a-f]{6}$/i.test(stored)) {
+        setHex(stored);
+      }
     }
   }, []);
 
@@ -43,7 +49,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setColor = useCallback((newHex: string) => {
     setHex(newHex);
-    localStorage.setItem("itxc-accent", newHex);
+    sessionStorage.setItem("itxc-accent", newHex);
   }, []);
 
   return (
@@ -59,7 +65,7 @@ export function useTheme() {
 
 export function getStoredColor(): { hex: string; r: number; g: number; b: number } {
   if (typeof window === "undefined") return { hex: DEFAULT, ...hexToRgb(DEFAULT) };
-  const stored = localStorage.getItem("itxc-accent");
+  const stored = sessionStorage.getItem("itxc-accent");
   const hex = stored && /^#[0-9a-f]{6}$/i.test(stored) ? stored : DEFAULT;
   return { hex, ...hexToRgb(hex) };
 }
