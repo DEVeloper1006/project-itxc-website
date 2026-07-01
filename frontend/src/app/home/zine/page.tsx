@@ -61,7 +61,7 @@ export default function ZinePage() {
         </Link>
 
         <h1
-          className="text-sm sm:text-base font-mono font-bold tracking-[0.3em] uppercase"
+          className="text-xl sm:text-2xl font-gothic tracking-wide"
           style={{ color: hex }}
         >
           Intoxicated Zine

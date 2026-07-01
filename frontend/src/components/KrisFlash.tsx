@@ -16,7 +16,7 @@ export default function KrisFlash({
 
   useEffect(() => {
     function check() {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1280);
     }
     check();
     window.addEventListener("resize", check); // Fix: Pass the event listener function directly
