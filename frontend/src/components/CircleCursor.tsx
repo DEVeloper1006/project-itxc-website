@@ -19,9 +19,9 @@ export default function CircleCursor() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (!isDesktop) return null;
-
   useEffect(() => {
+    if (!isDesktop) return;
+
     function onMove(e: MouseEvent) {
       target.current = { x: e.clientX, y: e.clientY };
       if (!visible) setVisible(true);
@@ -72,7 +72,9 @@ export default function CircleCursor() {
       document.removeEventListener("mouseenter", onEnter);
       cancelAnimationFrame(raf);
     };
-  }, [visible]);
+  }, [visible, isDesktop]);
+
+  if (!isDesktop) return null;
 
   const outerClass = `circle-cursor ${hovering ? "circle-cursor--hover" : ""}`;
   const innerClass = `circle-cursor__ring ${hovering ? "circle-cursor__ring--visible" : ""}`;
