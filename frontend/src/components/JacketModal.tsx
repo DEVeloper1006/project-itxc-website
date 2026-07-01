@@ -19,6 +19,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
   const [pin, setPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
   const [shake, setShake] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isFirst, setIsFirst] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -62,6 +63,8 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ email: email.trim() }),
       });
       if (!res.ok) throw new Error();
+      const data = await res.json();
+      setIsFirst(data.isFirst);
       setStep("success");
     } catch {
       setStep("error");
@@ -289,14 +292,16 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
               className="font-gothic text-2xl sm:text-3xl text-center tracking-wide"
               style={{ color: hex, textShadow: `0 0 15px ${hex}66` }}
             >
-              Entry Submitted
+              {isFirst ? "You Won The Jacket" : "Entry Submitted"}
             </p>
 
             <p
               className="font-mono text-xs sm:text-sm text-center mt-4 max-w-sm leading-relaxed tracking-wide"
               style={{ color: `${hex}99` }}
             >
-              Your entry has been recorded. If you&apos;re the first to solve it, the jacket is yours.
+              {isFirst
+                ? "You're the first to solve it. The jacket is yours — show this screen to claim it."
+                : "The jacket has already been claimed, but your entry has been recorded."}
             </p>
 
             <button
