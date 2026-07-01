@@ -45,7 +45,7 @@ export default function StatuesFlash({
   if (isMobile || !visible) return null;
 
   return (
-    <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
       <img
         src="/images/statues.png"
         alt=""
