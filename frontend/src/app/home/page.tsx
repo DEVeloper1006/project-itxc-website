@@ -92,13 +92,21 @@ function useParallax(strength: number = 20) {
   return offset;
 }
 
-const ZINE_PREVIEWS = [
-  "/images/zine/page-1.png",
-  "/images/zine/page-10.png",
-  "/images/zine/page-25.png",
-  "/images/zine/page-40.png",
+const ZINE_PAGE_COUNT = 64;
+
+function getRandomZinePreviews(count: number): string[] {
+  const indices = Array.from({ length: ZINE_PAGE_COUNT }, (_, i) => i + 1);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices.slice(0, count).map((n) => `/images/zine/page-${n}.png`);
+}
+const JACKET_PREVIEWS = [
+  "/images/jacket/img1.jpg",
+  "/images/jacket/img2.jpg",
+  "/images/jacket/img3.jpg",
 ];
-const JACKET_PREVIEWS = ["", "", ""];
 
 const NAV_ITEMS = [
   {
@@ -107,7 +115,8 @@ const NAV_ITEMS = [
     description: "Digital Magazine",
     position: { top: "55%", left: "5%" } as Record<string, string>,
     parallaxScale: 0.5,
-    previews: ZINE_PREVIEWS,
+    previews: null,
+    previewKey: "zine" as const,
     external: false,
     modal: false,
   },
@@ -118,6 +127,7 @@ const NAV_ITEMS = [
     position: { top: "30%", right: "4%" } as Record<string, string>,
     parallaxScale: 0.7,
     previews: JACKET_PREVIEWS,
+    previewKey: null,
     external: false,
     modal: true,
   },
@@ -128,6 +138,7 @@ const NAV_ITEMS = [
     position: { bottom: "6%", right: "18%" } as Record<string, string>,
     parallaxScale: 0.4,
     previews: null,
+    previewKey: null,
     external: true,
     modal: false,
   },
@@ -137,6 +148,7 @@ export default function Home() {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [jacketOpen, setJacketOpen] = useState(false);
+  const [zinePreviews] = useState(() => getRandomZinePreviews(4));
   const countdown = useCountdown();
   const parallax = useParallax(25);
   const bgParallax = useParallax(10);
@@ -291,6 +303,7 @@ export default function Home() {
         {/* Mobile/tablet nav — full-width vertical stack, visible below xl */}
         <div className="flex xl:hidden flex-col items-stretch gap-3 mt-4 sm:mt-6 w-full pb-24">
           {NAV_ITEMS.map((item) => {
+            const previews = item.previewKey === "zine" ? zinePreviews : item.previews;
             if (item.modal) {
               return (
                 <button
@@ -299,8 +312,8 @@ export default function Home() {
                   data-hover
                   className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 cursor-none"
                 >
-                  {item.previews && (
-                    <PreviewScroller images={item.previews} />
+                  {previews && (
+                    <PreviewScroller images={previews} />
                   )}
                   <div className="flex flex-col items-center gap-1 px-5 py-4">
                     <span
@@ -326,8 +339,8 @@ export default function Home() {
                 className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300"
                 {...extra}
               >
-                {item.previews && (
-                  <PreviewScroller images={item.previews} />
+                {previews && (
+                  <PreviewScroller images={previews} />
                 )}
                 <div className="flex flex-col items-center gap-1 px-5 py-4">
                   <span
@@ -348,16 +361,17 @@ export default function Home() {
 
       {/* Desktop floating nav — scattered with individual parallax, hidden below xl */}
       {NAV_ITEMS.map((item) => {
+        const previews = item.previewKey === "zine" ? zinePreviews : item.previews;
         const sharedClass = "hidden xl:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform";
         const sharedStyle = {
           ...item.position,
-          width: item.previews ? "280px" : "200px",
+          width: previews ? "280px" : "200px",
           transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
         };
         const inner = (
           <>
-            {item.previews && (
-              <PreviewScroller images={item.previews} />
+            {previews && (
+              <PreviewScroller images={previews} />
             )}
             <div className="flex flex-col items-center gap-1.5 px-8 py-5">
               <span
