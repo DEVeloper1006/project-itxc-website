@@ -61,7 +61,7 @@ export default function FlashOverlay({
     }
 
     timeoutRef.current = setTimeout(loop, 2000);
-    return () => clearTimeout(timeoutRef.current);
+    return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   }, [isMobile, interval, triggerSequence]);
 
   if (isMobile || !flash || visibleCount === 0) return null;
