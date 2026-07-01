@@ -30,9 +30,11 @@ body {
   color: #fff;
 }
 
-.cursor-none,
-.cursor-none * {
-  cursor: none !important;
+@media (min-width: 1280px) {
+  .cursor-none,
+  .cursor-none * {
+    cursor: none !important;
+  }
 }
 
 @keyframes shake {
