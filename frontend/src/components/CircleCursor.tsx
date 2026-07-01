@@ -9,7 +9,17 @@ export default function CircleCursor() {
   const target = useRef({ x: -100, y: -100 });
   const [hovering, setHovering] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const { hex } = useTheme();
+
+  useEffect(() => {
+    function check() { setIsDesktop(window.innerWidth >= 1280); }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (!isDesktop) return null;
 
   useEffect(() => {
     function onMove(e: MouseEvent) {
