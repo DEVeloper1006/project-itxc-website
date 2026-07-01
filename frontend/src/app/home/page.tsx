@@ -10,6 +10,7 @@ import KrisFlash from "@/components/KrisFlash";
 import StatuesFlash from "@/components/StatuesFlash";
 import EyesFlash from "@/components/EyesFlash";
 import ColorPicker from "@/components/ColorPicker";
+import JacketModal from "@/components/JacketModal";
 import { useTheme } from "@/lib/theme";
 
 const RELEASE_DATE = new Date("2026-09-18T00:00:00");
@@ -42,9 +43,17 @@ function pad(n: number) {
 
 function useParallax(strength: number = 20) {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
   const raf = useRef<number>(0);
   const target = useRef({ x: 0, y: 0 });
   const current = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    function check() { setIsDesktop(window.innerWidth >= 1280); }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const onMove = useCallback(
     (e: MouseEvent) => {
@@ -59,6 +68,11 @@ function useParallax(strength: number = 20) {
   );
 
   useEffect(() => {
+    if (!isDesktop) {
+      setOffset({ x: 0, y: 0 });
+      return;
+    }
+
     window.addEventListener("mousemove", onMove);
 
     function tick() {
@@ -73,7 +87,7 @@ function useParallax(strength: number = 20) {
       window.removeEventListener("mousemove", onMove);
       cancelAnimationFrame(raf.current);
     };
-  }, [onMove]);
+  }, [onMove, isDesktop]);
 
   return offset;
 }
@@ -95,15 +109,17 @@ const NAV_ITEMS = [
     parallaxScale: 0.5,
     previews: ZINE_PREVIEWS,
     external: false,
+    modal: false,
   },
   {
     label: "Jacket",
-    href: "/home/jacket",
-    description: "Custom Piece",
+    href: "#jacket",
+    description: "Giveaway",
     position: { top: "30%", right: "4%" } as Record<string, string>,
     parallaxScale: 0.7,
     previews: JACKET_PREVIEWS,
     external: false,
+    modal: true,
   },
   {
     label: "Know Your Worth",
@@ -113,12 +129,14 @@ const NAV_ITEMS = [
     parallaxScale: 0.4,
     previews: null,
     external: true,
+    modal: false,
   },
 ];
 
 export default function Home() {
   const [authorized, setAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [jacketOpen, setJacketOpen] = useState(false);
   const countdown = useCountdown();
   const parallax = useParallax(25);
   const bgParallax = useParallax(10);
@@ -139,45 +157,43 @@ export default function Home() {
   }
 
   return (
-    <div className="relative min-h-screen bg-black flex flex-col items-center justify-center overflow-hidden cursor-none">
+    <div className="relative min-h-screen bg-black flex flex-col items-center xl:justify-center overflow-x-hidden overflow-y-auto cursor-none">
       <ColorPicker />
       {/* Background image with parallax */}
       <div
-        className="absolute -inset-10 bg-cover bg-center bg-no-repeat will-change-transform"
+        className="fixed -inset-10 bg-cover bg-center bg-no-repeat will-change-transform"
         style={{
           backgroundImage: "url('/images/homepage-bg.jpg')",
-          transform: `translate(${bgParallax.x}px, ${bgParallax.y}px) scale(1.1)`,
+          transform: `translate(${bgParallax.x}px, ${bgParallax.y}px) scale(1.15)`,
         }}
       />
-      {/* Flashing image overlays — desktop only, behind everything */}
+      {/* Flashing image overlays — desktop only */}
       <FlashOverlay interval={5000} holdDuration={130} />
       <KrisFlash interval={7000} />
       <StatuesFlash interval={6000} />
       <EyesFlash interval={8000} />
       {/* Darken overlay */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="fixed inset-0 bg-black/50" />
       {/* Red particles */}
       <RedParticles />
       {/* Vignette */}
       <div
-        className="absolute inset-0"
+        className="fixed inset-0"
         style={{
           background:
             "radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.7) 100%)",
         }}
       />
 
-      {/* Credit */}
+      {/* Desktop corner text — absolute positioned, hidden below lg */}
       <span
-        className="absolute top-4 left-4 z-10 font-gothic text-sm sm:text-base tracking-wide"
+        className="absolute top-4 left-4 z-10 font-gothic text-lg xl:text-xl tracking-wide hidden xl:block"
         style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
       >
         Created By Dev Mody
       </span>
-
-      {/* Issue info */}
       <div
-        className="absolute top-4 right-4 z-10 font-gothic text-right text-sm sm:text-base leading-relaxed tracking-wide"
+        className="absolute top-4 right-4 z-10 font-gothic text-right text-lg xl:text-xl leading-relaxed tracking-wide hidden xl:block"
         style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
       >
         <div>MR. TXC</div>
@@ -185,16 +201,57 @@ export default function Home() {
         <div>FALL 2026</div>
       </div>
 
-      {/* Content with parallax */}
+      {/* Mobile/tablet header — stacked text, visible below lg */}
+      <div className="relative z-10 w-full flex flex-col items-center pt-6 pb-2 xl:hidden">
+        <span
+          className="font-gothic text-sm sm:text-base tracking-wide"
+          style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
+        >
+          Created By Dev Mody
+        </span>
+        <div
+          className="font-gothic text-sm sm:text-base tracking-wide text-center mt-1"
+          style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
+        >
+          MR. TXC / ISSUE 01 / FALL 2026
+        </div>
+      </div>
+
+      {/* Coming Soon box — desktop: absolute positioned, mobile/tablet: in flow */}
       <div
-        className="relative z-10 flex flex-col items-center gap-4 px-4 will-change-transform"
+        className="hidden xl:flex absolute z-10"
+        style={{
+          top: "5%",
+          left: "32%",
+          transform: `translate(${parallax.x * 0.6}px, ${parallax.y * 0.6}px)`,
+        }}
+      >
+        <div className="border border-white/20 backdrop-blur-sm bg-white/5 px-14 py-8 flex flex-col items-center">
+          <span
+            className="font-gothic text-6xl xl:text-7xl tracking-wide leading-tight text-center"
+            style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+          >
+            Coming
+          </span>
+          <span
+            className="font-gothic text-6xl xl:text-7xl tracking-wide leading-tight text-center"
+            style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+          >
+            Soon
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div
+        className="relative z-10 flex flex-col items-center gap-3 sm:gap-4 px-4 will-change-transform w-full"
         style={{
           transform: `translate(${parallax.x}px, ${parallax.y}px)`,
         }}
       >
         {/* Title */}
         <h1
-          className="font-gothic text-6xl sm:text-7xl md:text-8xl tracking-wide"
+          className="font-gothic text-[2.5rem] sm:text-5xl md:text-7xl xl:text-8xl tracking-wide text-center"
           style={{
             color: hex,
             textShadow:
@@ -205,7 +262,7 @@ export default function Home() {
         </h1>
 
         {/* Countdown */}
-        <div className="flex items-baseline gap-2 sm:gap-3 md:gap-4">
+        <div className="flex items-baseline gap-1.5 sm:gap-2 md:gap-3 xl:gap-4">
           <CountdownUnit value={countdown.days} label="DAYS" hex={hex} />
           <Separator hex={hex} />
           <CountdownUnit value={countdown.hours} label="HRS" hex={hex} />
@@ -215,9 +272,50 @@ export default function Home() {
           <CountdownUnit value={countdown.seconds} label="SEC" hex={hex} />
         </div>
 
-        {/* Mobile nav — vertical stack, visible only below md */}
-        <div className="flex md:hidden flex-col items-center gap-4 mt-6 w-full max-w-xs">
+        {/* Mobile/tablet Coming Soon box */}
+        <div className="xl:hidden border border-white/20 backdrop-blur-sm bg-white/5 px-10 py-5 flex flex-col items-center mt-2">
+          <span
+            className="font-gothic text-3xl sm:text-4xl md:text-5xl tracking-wide leading-tight text-center"
+            style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+          >
+            Coming
+          </span>
+          <span
+            className="font-gothic text-3xl sm:text-4xl md:text-5xl tracking-wide leading-tight text-center"
+            style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+          >
+            Soon
+          </span>
+        </div>
+
+        {/* Mobile/tablet nav — full-width vertical stack, visible below xl */}
+        <div className="flex xl:hidden flex-col items-stretch gap-3 mt-4 sm:mt-6 w-full pb-24">
           {NAV_ITEMS.map((item) => {
+            if (item.modal) {
+              return (
+                <button
+                  key={item.href}
+                  onClick={() => setJacketOpen(true)}
+                  data-hover
+                  className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 cursor-none"
+                >
+                  {item.previews && (
+                    <PreviewScroller images={item.previews} />
+                  )}
+                  <div className="flex flex-col items-center gap-1 px-5 py-4">
+                    <span
+                      className="font-gothic text-2xl sm:text-3xl transition-colors"
+                      style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
+                    >
+                      {item.label}
+                    </span>
+                    <span className="text-zinc-400 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
+                      {item.description}
+                    </span>
+                  </div>
+                </button>
+              );
+            }
             const Tag = item.external ? "a" : Link;
             const extra = item.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
             return (
@@ -231,14 +329,14 @@ export default function Home() {
                 {item.previews && (
                   <PreviewScroller images={item.previews} />
                 )}
-                <div className="flex flex-col items-center gap-1 px-5 py-3">
+                <div className="flex flex-col items-center gap-1 px-5 py-4">
                   <span
-                    className="font-gothic text-2xl transition-colors"
+                    className="font-gothic text-2xl sm:text-3xl transition-colors"
                     style={{ color: hex, textShadow: `0 0 12px ${hex}66` }}
                   >
                     {item.label}
                   </span>
-                  <span className="text-zinc-400 text-[10px] font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
+                  <span className="text-zinc-400 text-[10px] sm:text-xs font-mono uppercase tracking-[0.2em] group-hover:text-zinc-300 transition-colors">
                     {item.description}
                   </span>
                 </div>
@@ -248,29 +346,22 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Desktop floating nav — scattered with individual parallax, hidden below md */}
+      {/* Desktop floating nav — scattered with individual parallax, hidden below xl */}
       {NAV_ITEMS.map((item) => {
-        const Tag = item.external ? "a" : Link;
-        const extra = item.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
-        return (
-          <Tag
-            key={item.href}
-            href={item.href}
-            data-hover
-            className="hidden md:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform"
-            style={{
-              ...item.position,
-              width: item.previews ? "280px" : "200px",
-              transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
-            }}
-            {...extra}
-          >
+        const sharedClass = "hidden xl:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform";
+        const sharedStyle = {
+          ...item.position,
+          width: item.previews ? "280px" : "200px",
+          transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
+        };
+        const inner = (
+          <>
             {item.previews && (
               <PreviewScroller images={item.previews} />
             )}
             <div className="flex flex-col items-center gap-1.5 px-8 py-5">
               <span
-                className="font-gothic text-4xl md:text-5xl transition-colors"
+                className="font-gothic text-4xl xl:text-5xl transition-colors"
                 style={{
                   color: hex,
                   textShadow: `0 0 12px ${hex}66`,
@@ -282,9 +373,41 @@ export default function Home() {
                 {item.description}
               </span>
             </div>
+          </>
+        );
+
+        if (item.modal) {
+          return (
+            <button
+              key={item.href}
+              onClick={() => setJacketOpen(true)}
+              data-hover
+              className={`${sharedClass} cursor-none`}
+              style={sharedStyle}
+            >
+              {inner}
+            </button>
+          );
+        }
+
+        const Tag = item.external ? "a" : Link;
+        const extra = item.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
+        return (
+          <Tag
+            key={item.href}
+            href={item.href}
+            data-hover
+            className={sharedClass}
+            style={sharedStyle}
+            {...extra}
+          >
+            {inner}
           </Tag>
         );
       })}
+
+      {/* Jacket Giveaway Modal */}
+      {jacketOpen && <JacketModal onClose={() => setJacketOpen(false)} />}
     </div>
   );
 }
@@ -293,7 +416,7 @@ function CountdownUnit({ value, label, hex }: { value: number; label: string; he
   return (
     <div className="flex flex-col items-center">
       <span
-        className="font-gothic text-5xl sm:text-7xl md:text-9xl leading-none tabular-nums"
+        className="font-gothic text-3xl sm:text-5xl md:text-7xl xl:text-9xl leading-none tabular-nums"
         style={{
           color: hex,
           textShadow:
@@ -303,7 +426,7 @@ function CountdownUnit({ value, label, hex }: { value: number; label: string; he
         {pad(value)}
       </span>
       <span
-        className="text-[10px] sm:text-xs font-mono tracking-[0.3em] mt-1"
+        className="text-[8px] sm:text-[10px] md:text-xs font-mono tracking-[0.2em] sm:tracking-[0.3em] mt-0.5 sm:mt-1"
         style={{ color: `${hex}99` }}
       >
         {label}
@@ -315,7 +438,7 @@ function CountdownUnit({ value, label, hex }: { value: number; label: string; he
 function Separator({ hex }: { hex: string }) {
   return (
     <span
-      className="font-gothic text-4xl sm:text-6xl md:text-8xl leading-none self-start mt-1 sm:mt-2"
+      className="font-gothic text-2xl sm:text-4xl md:text-6xl xl:text-8xl leading-none self-start mt-0.5 sm:mt-1 md:mt-2"
       style={{
         color: `${hex}b3`,
         textShadow: `0 0 15px ${hex}66`,

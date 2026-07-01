@@ -24,7 +24,7 @@ export default function FlashOverlay({
 
   useEffect(() => {
     function check() {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1280);
     }
     check();
     window.addEventListener("resize", check);

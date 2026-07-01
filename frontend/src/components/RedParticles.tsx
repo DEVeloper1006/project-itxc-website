@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/lib/theme";
 
 const CHARS = "アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789";
@@ -12,8 +12,17 @@ export default function RedParticles() {
   const { hex, r, g, b } = useTheme();
   const colorRef = useRef({ hex, r, g, b });
   colorRef.current = { hex, r, g, b };
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
+    function check() { setIsDesktop(window.innerWidth >= 1280); }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktop) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d")!;
@@ -90,7 +99,9 @@ export default function RedParticles() {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, []);
+  }, [isDesktop]);
+
+  if (!isDesktop) return null;
 
   return (
     <canvas
