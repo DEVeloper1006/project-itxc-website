@@ -1,8 +1,8 @@
-import { Resend } from "resend";
+import { Redis } from "@upstash/redis";
 import { NextResponse } from "next/server";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const GIVEAWAY_EMAIL = "krisgandhi444@gmail.com";
+const redis = Redis.fromEnv();
+const ENTRIES_KEY = "giveaway:entries";
 
 export async function POST(request: Request) {
   try {
@@ -12,28 +12,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
     }
 
-    await resend.emails.send({
-      from: "ITXC Giveaway <onboarding@resend.dev>",
-      to: GIVEAWAY_EMAIL,
-      subject: "ITXC Jacket Giveaway Entry",
-      html: `
-        <div style="font-family: monospace; background: #000; color: #fff; padding: 40px;">
-          <h1 style="color: #dc2626; font-size: 28px;">Jacket Giveaway Entry</h1>
-          <p style="color: #ccc; margin-top: 20px;">Someone solved the riddle.</p>
-          <p style="color: #fff; font-size: 18px; margin-top: 12px;">
-            <strong>Email:</strong> ${email}
-          </p>
-          <p style="color: #666; margin-top: 30px; font-size: 12px;">
-            Sent from the ITXC website at ${new Date().toISOString()}
-          </p>
-        </div>
-      `,
-    });
+    const entry = { email, timestamp: Date.now() };
 
-    return NextResponse.json({ success: true });
+    // lpush so the first entry stays at the end (rpop-able), but we can also
+    // just read the full list and the last element is the first entry
+    await redis.lpush(ENTRIES_KEY, JSON.stringify(entry));
+
+    // Check if this is the first entry ever
+    const totalEntries = await redis.llen(ENTRIES_KEY);
+    const isFirst = totalEntries === 1;
+
+    return NextResponse.json({ success: true, isFirst });
   } catch {
     return NextResponse.json(
-      { error: "Failed to send entry" },
+      { error: "Failed to submit entry" },
       { status: 500 }
     );
   }

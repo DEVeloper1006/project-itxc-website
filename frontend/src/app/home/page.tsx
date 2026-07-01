@@ -202,7 +202,7 @@ export default function Home() {
         className="absolute top-4 left-4 z-10 font-gothic text-lg xl:text-xl tracking-wide hidden xl:block"
         style={{ color: `${hex}b3`, textShadow: `0 0 10px ${hex}40` }}
       >
-        Created By Dev Mody
+        Created By Project ITXC
       </span>
       <div
         className="absolute top-4 right-4 z-10 font-gothic text-right text-lg xl:text-xl leading-relaxed tracking-wide hidden xl:block"
