@@ -9,17 +9,16 @@ Context for Claude Code sessions on this repo. Read this first.
 
 ## Project
 
-Countdown / interactive teaser website for a friend's poetry book **"Intoxicated"**, releasing **September 1st 2026**. Inspired by Drake's *Iceman* rollout site (built by Low Battery, Toronto). Goal: drop an atmospheric, gated experience leading up to release.
+Countdown / interactive teaser website for a friend's poetry book **"Intoxicated"**, releasing **September 18th 2026**. Inspired by Drake's *Iceman* rollout site (built by Low Battery, Toronto). Goal: drop an atmospheric, gated experience leading up to release.
 
 **Book vibe**: multiple acts, "shots after shots" pacing, toxic-relationships theme. Visual aesthetic = in-your-face, Chrome Hearts–style gothic typography, black + red palette. B&W opera hall / mansion staircase background on the homepage.
 
 ## Stack
 
 - **Frontend**: Next.js 16 App Router + React 19 + TypeScript + Tailwind 4, `src/` directory, Turbopack, `@/*` import alias, **no** React Compiler
-- **Backend**: TBD. Leaning Next.js route handlers over Flask for simplicity (deploys as one unit on Vercel). Reassess if the minigame needs Python.
-- **Storage**: AWS S3 (private bucket + pre-signed URLs once gate 2 ships)
-- **Lambda**: only if we end up needing image resize-on-upload
-- **Deploy**: Vercel for frontend
+- **Backend**: Next.js route handlers (deployed as one unit on Vercel)
+- **Storage**: Upstash Redis (via Vercel integration) for giveaway entries
+- **Deploy**: Vercel (production)
 
 ## Repo layout
 
@@ -30,26 +29,42 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
 │   │   ├── fonts/
 │   │   │   └── CloisterBlack.ttf     ← Chrome Hearts–style gothic font
 │   │   └── images/
-│   │       └── homepage-bg.jpg       ← B&W opera hall / mansion staircase
+│   │       ├── homepage-bg.jpg       ← B&W opera hall / mansion staircase
+│   │       ├── icon.jpg              ← site favicon
+│   │       ├── jacket/               ← jacket giveaway preview images
+│   │       └── zine/                 ← 64 zine page images
 │   └── src/
 │       ├── app/
 │       │   ├── page.tsx              ← Gate 1 (matrix terminal password gate)
 │       │   ├── layout.tsx            ← root layout, Geist Mono font, black bg
 │       │   ├── globals.css           ← Tailwind 4, CloisterBlack @font-face, dark theme
+│       │   ├── icon.jpg              ← favicon (Next.js convention)
+│       │   ├── api/
+│       │   │   └── giveaway/
+│       │   │       ├── route.ts      ← POST: store giveaway entry in Redis
+│       │   │       └── winner/
+│       │   │           └── route.ts  ← GET: check winner + all entries
 │       │   └── home/
-│       │       ├── layout.tsx        ← home layout, mounts CircleCursor for all /home/* pages
-│       │       ├── page.tsx          ← homepage (countdown, parallax, floating nav)
-│       │       ├── zine/page.tsx     ← magazine/zine viewer page
-│       │       ├── jacket/           ← (planned) custom jacket page
-│       │       └── game/             ← (planned) mini-game page
+│       │       ├── layout.tsx        ← home layout, mounts CircleCursor + ThemeProvider
+│       │       ├── page.tsx          ← homepage (countdown, parallax, floating nav, jacket modal)
+│       │       └── zine/page.tsx     ← magazine/zine viewer page
 │       ├── components/
 │       │   ├── MatrixRain.tsx        ← full-screen red matrix rain canvas
 │       │   ├── Terminal.tsx          ← typewriter boot sequence + password input
 │       │   ├── ZineViewer.tsx        ← 3D page-flip magazine viewer
-│       │   └── CircleCursor.tsx      ← Destiny-style circle cursor (expands on hover)
+│       │   ├── CircleCursor.tsx      ← Destiny-style circle cursor (desktop only, ≥1280px)
+│       │   ├── ColorPicker.tsx       ← accent color selector (persists in sessionStorage)
+│       │   ├── JacketModal.tsx       ← jacket giveaway popup (email → riddle → submit)
+│       │   ├── PreviewScroller.tsx   ← auto-scrolling image preview for nav buttons
+│       │   ├── FlashOverlay.tsx      ← flash image overlay (desktop only)
+│       │   ├── KrisFlash.tsx         ← Kris flash overlay (desktop only)
+│       │   ├── StatuesFlash.tsx      ← statues flash overlay (desktop only)
+│       │   ├── EyesFlash.tsx         ← eyes flash overlay (desktop only)
+│       │   ├── RedParticles.tsx      ← matrix-style red particle rain (desktop only)
+│       │   └── LoadingScreen.tsx     ← animated loading screen
 │       └── lib/
-│           └── auth.ts              ← plaintext password check ("itxc-2026")
-├── backend/                          ← empty, may stay empty
+│           ├── auth.ts              ← plaintext password check ("itxc-2026")
+│           └── theme.ts             ← React Context + CSS custom properties for accent color
 └── .claude/
     └── launch.json                   ← dev server config for preview tool
 ```
@@ -58,6 +73,7 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
 
 ### Done
 - Next.js scaffolded with Tailwind 4, Turbopack, App Router
+- **Deployed on Vercel** with Upstash Redis integration
 - **Gate 1** — matrix terminal at `/`:
   - Red matrix-rain canvas background (Japanese katakana + digits)
   - Typewriter boot sequence ("ITXC SYSTEM v2.06", connection/encryption/integrity checks)
@@ -67,49 +83,57 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
   - On fail: "ACCESS DENIED" flash, re-prompt
 - **Homepage `/home`**:
   - B&W opera hall / mansion staircase background image with darken overlay + vignette
-  - "ITXC" title in CloisterBlack (Chrome Hearts–style gothic font), red with glow
-  - Countdown timer to Sept 1st 2026 in same gothic font, large and bold, red glow
+  - "INTOXICATED" title in CloisterBlack (Chrome Hearts–style gothic font) with glow
+  - Countdown timer to Sept 18th 2026 in same gothic font, large and bold
   - DAYS / HRS / MIN / SEC labels in mono beneath each unit
-  - **Parallax mouse tracking** — content and background shift inversely to cursor movement (ICEMAN-style), smooth eased interpolation
-  - **Three floating nav buttons** at bottom: Zine (Digital Magazine), Jacket (Custom Piece), Game (Mini-Game) — frosted glass style with backdrop-blur, red gothic label + mono subtitle, hover effects
+  - "COMING SOON" box above the title (desktop: absolute positioned with parallax, mobile: in-flow)
+  - **Parallax mouse tracking** (desktop only, ≥1280px) — content and background shift inversely to cursor movement
+  - **Color picker** — user can change the accent color; persists in sessionStorage, resets on reload
+  - **Three floating nav buttons**: Zine (Digital Magazine), Jacket (Giveaway), Know Your Worth (Previous Book)
+    - PreviewScroller with auto-scrolling images on Zine and Jacket buttons
+    - Zine previews randomize from all 64 pages on each load
+  - **Flash overlays** (desktop only): FlashOverlay, KrisFlash, StatuesFlash, EyesFlash — atmospheric image flashes
+  - **Red particles** (desktop only): matrix-style falling characters
   - Auth guard: bounces to `/` if `sessionStorage.gate1` is not set
-- **Custom circle cursor** (Destiny-style):
-  - Small circle (16px) follows mouse with eased lag
-  - Expands to 48px when hovering over buttons, links, or `[data-hover]` elements
-  - Uses `mix-blend-difference` for visibility on any background
-  - Mounted via `/home/layout.tsx` — appears on all `/home/*` pages, NOT on Gate 1
-  - Native cursor hidden with `cursor-none` on all `/home/*` pages
+  - **Fully responsive**: separate mobile/tablet layout (stacked, scrollable, no animations) vs desktop (absolute positioned, parallax, all effects)
+  - Breakpoint: `xl` (1280px) — everything below is mobile/tablet layout
+- **Custom circle cursor** (Destiny-style, desktop only ≥1280px):
+  - Small circle follows mouse with eased lag
+  - Expands when hovering over interactive elements
+  - Uses `mix-blend-difference` for visibility
+  - Hidden on mobile/tablet — default cursor/touch behavior preserved
 - **Zine page `/home/zine`**:
-  - 44-page magazine viewer with placeholder pages (ready for S3 images)
+  - 64-page magazine viewer
   - Desktop: two-page spread view (≥768px), single page on mobile
   - 3D book-like page-flip animation (CSS perspective + rotateY)
-  - Drag/swipe to flip: pointer drag left = next, right = prev, with snap-or-revert threshold
+  - Drag/swipe to flip with snap-or-revert threshold
   - PREV/NEXT buttons + keyboard arrows + spacebar navigation
-  - Front/back face rendering during flip with dynamic shadow
-  - Spine shadow between pages in spread view
-  - VHS aesthetic: scanline overlay, noise grain, vignette on black background
-  - Header: "← BACK" link to `/home` + "INTOXICATED ZINE" title in red
+  - VHS aesthetic: scanline overlay, noise grain, vignette
+  - Title in Chrome Hearts gothic font
   - Auth guard: same as homepage
+- **Jacket Giveaway** (modal popup from homepage):
+  - Multi-step flow: email input (with validation) → 6-character PIN riddle → auto-submit
+  - Entries stored in Upstash Redis with timestamp
+  - First correct solver sees "You Won The Jacket", subsequent solvers see "The jacket has already been claimed"
+  - `/api/giveaway/winner` GET endpoint to check winner + all entries
+  - Animated entrance/exit, shake on wrong answer, loading spinner
+  - Riddle answer is placeholder `XXXXXX` — update in `JacketModal.tsx:85` when real riddle is set
 
 ### Next (priority order)
-1. **Jacket page `/home/jacket`** — custom ITXC jacket showcase/configurator. Design TBD.
-2. **Mini-game page `/home/game`** — deferred, design TBD.
-3. **Gate 2** — second puzzle, themed to *Intoxicated* (heavier than gate 1). Unlocks the magazine. Server-validated.
-4. **Zine S3 integration** — swap placeholder pages for real images fetched from AWS S3 via pre-signed URLs. Lazy-load current + next 2 spreads.
-5. **Homepage polish** — additional decorative elements, animations, responsive fine-tuning.
-6. **Floating merch element** — CN Tower live-feed style, likely react-three-fiber.
-7. **Hidden messages / easter eggs** — console.log, hover reveals, secret routes.
+1. **FNAF 2–style mini-game** — sprite-based horror mini-game exploring the dark lore behind the book and magazine. Will replace the "COMING SOON" box on the homepage. Inspired by Five Nights at Freddy's 2 gameplay style. Design TBD.
+2. **Gate 2** — second puzzle, themed to *Intoxicated* (heavier than gate 1). Unlocks the magazine. Server-validated.
+3. **Homepage polish** — additional decorative elements, animations, responsive fine-tuning.
+4. **Hidden messages / easter eggs** — console.log, hover reveals, secret routes.
 
 ## Key decisions & tradeoffs
 
 - **Gate 1 is client-side on purpose.** Password lives in `src/lib/auth.ts` as plaintext. The homepage isn't truly secret — it's an atmospheric door. Real secrets (the magazine) go behind server-validated gate 2.
-- **No hashing on gate 1.** SHA-256 was originally used but removed — adds complexity without real security since it's client-side.
 - **Custom page-flip over react-pageflip.** Built a custom 3D flip with CSS transforms + pointer events — no extra dependency, full control over animation and drag behavior.
-- **CloisterBlack font for Chrome Hearts aesthetic.** Loaded via `@font-face` in `globals.css`, available as `font-gothic` Tailwind class. From fontyfonts.com (free with attribution for commercial use).
-- **Parallax is mouse-only.** On mobile/touch, the parallax offset stays at 0 (no `mousemove` events). This is intentional — touch parallax via gyroscope is a future consideration.
-- **Circle cursor mounted at `/home/layout.tsx`** so it appears on all authenticated pages but NOT on the Gate 1 password page, where the terminal aesthetic uses its own cursor style.
-- **Release date is Sept 1st 2026** — hardcoded in `home/page.tsx` as `RELEASE_DATE`. Change there when the date firms up.
-- **Image protection plan**: private S3 bucket + pre-signed URLs with short TTL, re-signed as the user flips.
+- **CloisterBlack font for Chrome Hearts aesthetic.** Loaded via `@font-face` in `globals.css`, available as `font-gothic` Tailwind class.
+- **Parallax and animations are desktop-only (≥1280px).** On mobile/touch, parallax returns `{0,0}`, flash overlays and particles are hidden. Clean mobile experience.
+- **Circle cursor desktop-only.** Hidden below 1280px so mobile/tablet get native touch behavior. `cursor-none` CSS rule scoped via `@media (min-width: 1280px)`.
+- **Release date is Sept 18th 2026** — hardcoded in `home/page.tsx` as `RELEASE_DATE`.
+- **Upstash Redis for giveaway** — stores entries with timestamps, first entry = winner. Env vars auto-injected by Vercel integration (`UPSTASH_REDIS_KV_REST_API_URL`, `UPSTASH_REDIS_KV_REST_API_TOKEN`).
 - **No DRM.** Can't prevent screenshots, won't try.
 
 ## Conventions
@@ -119,24 +143,28 @@ Countdown / interactive teaser website for a friend's poetry book **"Intoxicated
 - Shared logic / hooks → `src/lib/`
 - Routes → `src/app/`
 - Path alias `@/*` → `src/*`
-- `font-gothic` = CloisterBlack (Chrome Hearts alt) — used on `/home` and downstream for titles/countdown
+- `font-gothic` = CloisterBlack (Chrome Hearts alt) — used for titles, countdown, nav labels
 - `font-mono` = Geist Mono — used for terminal UI, labels, body text
 - Tailwind for styling unless something truly needs a CSS module
 - VHS texture (scanlines + grain + vignette) on zine page; matrix rain on gate 1
-- `cursor-none` + CircleCursor on all `/home/*` pages
+- `cursor-none` + CircleCursor on `/home/*` pages (desktop only)
+- Responsive breakpoint: `xl` (1280px) separates mobile/tablet from desktop layout
+- All animations and effects disabled below 1280px
 
 ## References
 
 - Drake's *Iceman* site by Low Battery (Toronto agency) — overall blueprint, parallax mouse tracking
-- *Iceman* zine: 44 hidden-message images → direct format inspo for our zine
+- *Iceman* zine — format inspo for our zine viewer
 - Destiny / Destiny 2 UI — circle cursor that expands on interactive elements
-- "Iceman / Low Battery" aesthetic for floating merch element
+- Five Nights at Freddy's 2 — gameplay style inspo for the upcoming mini-game
 
 ## Notes for future sessions
 
-- **Keep this file updated as decisions land.** Especially: backend choice, fonts chosen, deploy target firmed up, release date changes, new pages added.
-- The friend's first book is the source for gate 1's missing-word puzzle. Gate 2 should pull from *Intoxicated* itself.
-- When patterns worth saving emerge (pre-signed URL flow, password gating, page-flip lazy-load), suggest a wiki entry for the Obsidian LLM wiki.
+- **Keep this file updated as decisions land.**
+- The friend's first book (*Know Your Worth*) is the source for gate 1's password. Gate 2 should pull from *Intoxicated* itself.
 - Do not commit the password to a public repo if the puzzle answer is sensitive. For gate 1 it's fine; for gate 2 the secret lives server-side only.
-- The zine viewer uses `sessionStorage` for auth — refreshing the zine page will bounce back to `/` since sessionStorage persists per tab but the gate check runs on mount.
-- The CircleCursor uses `mix-blend-difference` — it inverts colors underneath. On pure black backgrounds the cursor border may be invisible; consider adding a subtle background tint if this becomes an issue.
+- The zine viewer uses `sessionStorage` for auth — refreshing bounces back to `/`.
+- The CircleCursor uses `mix-blend-difference` — it inverts colors underneath. On pure black backgrounds the cursor border may be invisible.
+- Giveaway riddle answer is placeholder `XXXXXX` — must be updated before the party/launch.
+- To check giveaway winner: visit `/api/giveaway/winner` on the deployed site.
+- To clear test entries: Vercel dashboard → Storage → itxc-redis → Open in Upstash → Data Browser → delete `giveaway:entries` key.
