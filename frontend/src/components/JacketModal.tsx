@@ -236,7 +236,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
               className="font-gothic text-base sm:text-lg md:text-xl text-center mt-3 sm:mt-4 max-w-md leading-relaxed"
               style={{ color: `${hex}cc` }}
             >
-              &quot;Riddle placeholder — coming soon&quot;
+              &quot;Take a closer look at the zine while I sip on this&quot;
             </p>
 
             <div
