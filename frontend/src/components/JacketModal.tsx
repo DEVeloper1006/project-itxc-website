@@ -3,8 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 
-const PIN_LENGTH = 6;
-
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -16,11 +14,11 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
-  const [pin, setPin] = useState<string[]>(Array(PIN_LENGTH).fill(""));
+  const [answer, setAnswer] = useState("");
   const [shake, setShake] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isFirst, setIsFirst] = useState(false);
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const answerRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,7 +28,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (step === "riddle") {
-      setTimeout(() => inputRefs.current[0]?.focus(), 50);
+      setTimeout(() => answerRef.current?.focus(), 50);
     }
   }, [step]);
 
@@ -71,48 +69,17 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleChange = (index: number, value: string) => {
-    const char = value.slice(-1).toUpperCase();
-    if (!char) return;
-    const next = [...pin];
-    next[index] = char;
-    setPin(next);
-
-    if (index < PIN_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    if (index === PIN_LENGTH - 1 && next.every((c) => c !== "")) {
-      const answer = next.join("");
-      if (answer === "XXXXXX") {
-        sendEntry();
-      } else {
-        setShake(true);
-        setTimeout(() => {
-          setShake(false);
-          setPin(Array(PIN_LENGTH).fill(""));
-          inputRefs.current[0]?.focus();
-        }, 600);
-      }
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace") {
-      e.preventDefault();
-      if (pin[index]) {
-        const next = [...pin];
-        next[index] = "";
-        setPin(next);
-      } else if (index > 0) {
-        const next = [...pin];
-        next[index - 1] = "";
-        setPin(next);
-        inputRefs.current[index - 1]?.focus();
-      }
-    }
-    if (e.key === "Escape") {
-      handleClose();
+  const handleAnswerSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (answer.trim().toUpperCase() === "BROWN") {
+      sendEntry();
+    } else {
+      setShake(true);
+      setTimeout(() => {
+        setShake(false);
+        setAnswer("");
+        answerRef.current?.focus();
+      }, 600);
     }
   };
 
@@ -224,7 +191,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
         )}
 
         {step === "riddle" && (
-          <div className="flex flex-col items-center w-full mt-4 sm:mt-6">
+          <form onSubmit={handleAnswerSubmit} className="flex flex-col items-center w-full mt-4 sm:mt-6">
             <p
               className="font-mono text-xs sm:text-sm text-center max-w-md leading-relaxed tracking-wide uppercase"
               style={{ color: `${hex}99` }}
@@ -233,42 +200,51 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
             </p>
 
             <p
-              className="font-gothic text-base sm:text-lg md:text-xl text-center mt-3 sm:mt-4 max-w-md leading-relaxed"
+              className="font-gothic text-base sm:text-lg md:text-xl text-center mt-3 sm:mt-4 max-w-md leading-relaxed italic"
               style={{ color: `${hex}cc` }}
             >
               &quot;Take a closer look at the zine while I sip on this&quot;
             </p>
 
-            <div
-              className={`flex gap-2 sm:gap-3 mt-6 sm:mt-8 ${shake ? "animate-shake" : ""}`}
-            >
-              {Array.from({ length: PIN_LENGTH }).map((_, i) => (
-                <input
-                  key={i}
-                  ref={(el) => { inputRefs.current[i] = el; }}
-                  type="text"
-                  maxLength={1}
-                  value={pin[i]}
-                  onChange={(e) => handleChange(i, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="w-10 h-12 sm:w-12 sm:h-14 md:w-14 md:h-16 text-center font-gothic text-xl sm:text-2xl md:text-3xl bg-transparent border outline-none uppercase cursor-none transition-all duration-200 focus:scale-105"
-                  style={{
-                    borderColor: pin[i] ? hex : `${hex}40`,
-                    color: hex,
-                    textShadow: pin[i] ? `0 0 8px ${hex}66` : "none",
-                    boxShadow: pin[i] ? `0 0 12px ${hex}22, inset 0 0 8px ${hex}11` : "none",
-                  }}
-                />
-              ))}
+            <div className={`w-full max-w-sm mt-6 sm:mt-8 ${shake ? "animate-shake" : ""}`}>
+              <input
+                ref={answerRef}
+                type="text"
+                value={answer}
+                onChange={(e) => setAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") handleClose();
+                }}
+                placeholder="Your answer..."
+                className="w-full px-4 py-3 bg-transparent border outline-none font-mono text-sm sm:text-base tracking-wide cursor-none transition-all duration-200 focus:scale-[1.02] placeholder:opacity-30 text-center uppercase"
+                style={{
+                  borderColor: `${hex}40`,
+                  color: hex,
+                  caretColor: hex,
+                }}
+              />
             </div>
+
+            <button
+              type="submit"
+              data-hover
+              className="mt-6 sm:mt-8 px-10 py-3 border font-gothic text-xl sm:text-2xl tracking-wide cursor-none transition-all duration-300 hover:scale-105 hover:bg-white/5"
+              style={{
+                borderColor: `${hex}40`,
+                color: hex,
+                textShadow: `0 0 12px ${hex}66`,
+              }}
+            >
+              Submit
+            </button>
 
             <span
               className="font-mono text-[10px] sm:text-xs mt-4 tracking-[0.3em] uppercase"
               style={{ color: `${hex}55` }}
             >
-              Enter 6-character code
+              Enter your answer
             </span>
-          </div>
+          </form>
         )}
 
         {step === "sending" && (
