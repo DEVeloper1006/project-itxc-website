@@ -3,6 +3,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 
+const ANSWER_HASH =
+  "4970631d26623a122f1a584518c929b1180e505bcc27369307a4aa0caa03d929";
+
+async function sha256(text: string): Promise<string> {
+  const data = new TextEncoder().encode(text);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -52,14 +63,24 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
     setStep("riddle");
   };
 
-  const sendEntry = async () => {
+  const sendEntry = async (submittedAnswer: string) => {
     setStep("sending");
     try {
       const res = await fetch("/api/giveaway", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: email.trim(), answer: submittedAnswer }),
       });
+      if (res.status === 403) {
+        setShake(true);
+        setStep("riddle");
+        setTimeout(() => {
+          setShake(false);
+          setAnswer("");
+          answerRef.current?.focus();
+        }, 600);
+        return;
+      }
       if (!res.ok) throw new Error();
       const data = await res.json();
       setIsFirst(data.isFirst);
@@ -69,10 +90,12 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleAnswerSubmit = (e: React.FormEvent) => {
+  const handleAnswerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (answer.trim().toUpperCase() === "BROWN") {
-      sendEntry();
+    const normalized = answer.trim().toUpperCase();
+    const hash = await sha256(normalized);
+    if (hash === ANSWER_HASH) {
+      sendEntry(normalized);
     } else {
       setShake(true);
       setTimeout(() => {
@@ -199,12 +222,26 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
               Solve the riddle to enter the giveaway
             </p>
 
-            <p
-              className="font-gothic text-base sm:text-lg md:text-xl text-center mt-3 sm:mt-4 max-w-md leading-relaxed italic"
+            <div
+              className="mt-3 sm:mt-4 max-w-md text-center leading-relaxed"
               style={{ color: `${hex}cc` }}
             >
-              &quot;Take a closer look at the zine while I sip on this&quot;
-            </p>
+              <p className="font-gothic text-base sm:text-lg md:text-xl italic leading-relaxed">
+                TM told us many important lessons<br />
+                Just like how it&apos;s in the zine<br />
+                If you look closely<br />
+                The truth could eventually be seen
+              </p>
+              <p className="font-gothic text-base sm:text-lg md:text-xl italic leading-relaxed mt-3">
+                Heart can be made of gold<br />
+                While cupids bow was left on scene<br />
+                With the drinks giving you a cold buzz<br />
+                With news that travels around<br />
+                Like a job that&apos;s never done<br />
+                Went from doing me into bittersweet<br />
+                Knowing my worth and never forgetting the streets
+              </p>
+            </div>
 
             <div className={`w-full max-w-sm mt-6 sm:mt-8 ${shake ? "animate-shake" : ""}`}>
               <input
@@ -312,7 +349,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
             </p>
 
             <button
-              onClick={() => sendEntry()}
+              onClick={() => sendEntry(answer.trim().toUpperCase())}
               data-hover
               className="mt-6 sm:mt-8 px-10 py-3 border font-gothic text-xl sm:text-2xl tracking-wide cursor-none transition-all duration-300 hover:scale-105 hover:bg-white/5"
               style={{
