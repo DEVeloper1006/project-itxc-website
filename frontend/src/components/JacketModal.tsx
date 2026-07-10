@@ -223,16 +223,16 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
             </p>
 
             <div
-              className="mt-3 sm:mt-4 max-w-md text-center leading-relaxed"
+              className="mt-3 sm:mt-4 max-w-md text-center leading-loose"
               style={{ color: `${hex}cc` }}
             >
-              <p className="font-gothic text-base sm:text-lg md:text-xl italic leading-relaxed">
+              <p className="font-mono text-xs sm:text-sm italic leading-loose tracking-wide">
                 TM told us many important lessons<br />
                 Just like how it&apos;s in the zine<br />
                 If you look closely<br />
                 The truth could eventually be seen
               </p>
-              <p className="font-gothic text-base sm:text-lg md:text-xl italic leading-relaxed mt-3">
+              <p className="font-mono text-xs sm:text-sm italic leading-loose tracking-wide mt-4">
                 Heart can be made of gold<br />
                 While cupids bow was left on scene<br />
                 With the drinks giving you a cold buzz<br />

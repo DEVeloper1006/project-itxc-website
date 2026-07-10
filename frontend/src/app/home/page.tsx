@@ -102,11 +102,7 @@ function getRandomZinePreviews(count: number): string[] {
   }
   return indices.slice(0, count).map((n) => `/images/zine/page-${n}.png`);
 }
-const JACKET_PREVIEWS = [
-  "/images/jacket/img1.jpg",
-  "/images/jacket/img2.jpg",
-  "/images/jacket/img3.jpg",
-];
+const JACKET_PREVIEW = "/images/jacket/img1.jpg";
 
 const NAV_ITEMS = [
   {
@@ -126,7 +122,7 @@ const NAV_ITEMS = [
     description: "Giveaway",
     position: { top: "30%", right: "4%" } as Record<string, string>,
     parallaxScale: 0.7,
-    previews: JACKET_PREVIEWS,
+    previews: null,
     previewKey: null,
     external: false,
     modal: true,
@@ -312,9 +308,11 @@ export default function Home() {
                   data-hover
                   className="w-full group flex flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 cursor-none"
                 >
-                  {previews && (
-                    <PreviewScroller images={previews} />
-                  )}
+                  <img
+                    src={JACKET_PREVIEW}
+                    alt="Jacket preview"
+                    className="w-full h-40 sm:h-48 object-cover"
+                  />
                   <div className="flex flex-col items-center gap-1 px-5 py-4">
                     <span
                       className="font-gothic text-2xl sm:text-3xl transition-colors"
@@ -362,16 +360,24 @@ export default function Home() {
       {/* Desktop floating nav — scattered with individual parallax, hidden below xl */}
       {NAV_ITEMS.map((item) => {
         const previews = item.previewKey === "zine" ? zinePreviews : item.previews;
+        const hasVisual = previews || item.modal;
         const sharedClass = "hidden xl:flex absolute z-10 group flex-col overflow-hidden border border-white/20 backdrop-blur-sm bg-white/5 hover:bg-white/10 transition-all duration-300 will-change-transform";
         const sharedStyle = {
           ...item.position,
-          width: previews ? "280px" : "200px",
+          width: hasVisual ? "280px" : "200px",
           transform: `translate(${parallax.x * item.parallaxScale}px, ${parallax.y * item.parallaxScale}px)`,
         };
         const inner = (
           <>
             {previews && (
               <PreviewScroller images={previews} />
+            )}
+            {item.modal && (
+              <img
+                src={JACKET_PREVIEW}
+                alt="Jacket preview"
+                className="w-full h-44 object-cover"
+              />
             )}
             <div className="flex flex-col items-center gap-1.5 px-8 py-5">
               <span
