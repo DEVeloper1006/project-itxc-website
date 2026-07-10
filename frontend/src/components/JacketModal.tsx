@@ -3,17 +3,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "@/lib/theme";
 
-const ANSWER_HASH =
-  "4970631d26623a122f1a584518c929b1180e505bcc27369307a4aa0caa03d929";
-
-async function sha256(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text);
-  const buf = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -90,20 +79,10 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleAnswerSubmit = async (e: React.FormEvent) => {
+  const handleAnswerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const normalized = answer.trim().toUpperCase();
-    const hash = await sha256(normalized);
-    if (hash === ANSWER_HASH) {
-      sendEntry(normalized);
-    } else {
-      setShake(true);
-      setTimeout(() => {
-        setShake(false);
-        setAnswer("");
-        answerRef.current?.focus();
-      }, 600);
-    }
+    if (!answer.trim()) return;
+    sendEntry(answer.trim());
   };
 
   return (
