@@ -85,7 +85,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center cursor-none"
+      className="fixed inset-0 z-70 flex items-center justify-center cursor-none"
       style={{
         backgroundColor: visible ? "rgba(0,0,0,0.85)" : "rgba(0,0,0,0)",
         transition: "background-color 300ms ease",

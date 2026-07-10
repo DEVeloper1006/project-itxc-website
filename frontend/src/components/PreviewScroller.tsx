@@ -35,7 +35,7 @@ export default function PreviewScroller({
   const hasReal = images.some((src) => src !== "");
 
   return (
-    <div className="relative w-full aspect-[4/3] overflow-hidden bg-black/60 border-t border-white/10">
+    <div className="relative w-full aspect-4/3 overflow-hidden bg-black/60 border-t border-white/10">
       {images.map((src, i) => (
         <div
           key={i}

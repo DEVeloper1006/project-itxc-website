@@ -46,7 +46,7 @@ export default function KrisFlash({
   if (isMobile || !visible) return null;
 
   return (
-    <div className="absolute inset-0 z-[2] pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 z-2 pointer-events-none overflow-hidden">
       {/* 2nd slot: left 20%, centered in that 20% band */}
       <img
         src="/images/kris.png"
