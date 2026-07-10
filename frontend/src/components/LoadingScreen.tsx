@@ -219,7 +219,7 @@ export default function LoadingScreen({ onComplete }: { onComplete: () => void }
             {Math.floor(progress * 100)}%
           </span>
         </div>
-        <div className="h-[2px] w-full" style={{ backgroundColor: `${accent.current.hex}1a` }}>
+        <div className="h-0.5 w-full" style={{ backgroundColor: `${accent.current.hex}1a` }}>
           <div
             className="h-full transition-none"
             style={{

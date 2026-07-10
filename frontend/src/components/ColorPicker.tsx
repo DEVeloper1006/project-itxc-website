@@ -11,7 +11,7 @@ export default function ColorPicker() {
     <button
       onClick={() => inputRef.current?.click()}
       data-hover
-      className="fixed bottom-4 left-4 z-[60] w-8 h-8 rounded-full border border-white/20 hover:border-white/50 transition-all hover:scale-110 cursor-none"
+      className="fixed bottom-4 left-4 z-60 w-8 h-8 rounded-full border border-white/20 hover:border-white/50 transition-all hover:scale-110 cursor-none"
       style={{
         backgroundColor: hex,
         boxShadow: `0 0 12px ${hex}66, 0 0 4px ${hex}44`,

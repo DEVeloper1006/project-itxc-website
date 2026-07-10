@@ -55,7 +55,7 @@ export default function EyesFlash({
   if (isMobile || visibleCount === 0) return null;
 
   return (
-    <div className="absolute inset-0 z-[3] pointer-events-none overflow-hidden">
+    <div className="absolute inset-0 z-3 pointer-events-none overflow-hidden">
       {Array.from({ length: COPY_COUNT }).map((_, i) => {
         if (i >= visibleCount) return null;
         const pct = i / (COPY_COUNT - 1);

@@ -106,7 +106,7 @@ export default function RedParticles() {
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 pointer-events-none z-[5]"
+      className="absolute inset-0 pointer-events-none z-5"
     />
   );
 }
