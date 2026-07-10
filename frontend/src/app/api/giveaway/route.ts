@@ -7,6 +7,7 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_KV_REST_API_TOKEN!,
 });
 const ENTRIES_KEY = "giveaway:entries";
+const RATE_LIMIT_SECONDS = 5;
 
 const ANSWER_HASH =
   "4970631d26623a122f1a584518c929b1180e505bcc27369307a4aa0caa03d929";
@@ -23,11 +24,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Answer required" }, { status: 400 });
     }
 
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
+    const rateLimitKey = `giveaway:ratelimit:${ip}`;
+    const existing = await redis.get(rateLimitKey);
+    if (existing) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please wait." },
+        { status: 429 }
+      );
+    }
+
     const hash = createHash("sha256")
       .update(answer.trim().toUpperCase())
       .digest("hex");
 
     if (hash !== ANSWER_HASH) {
+      await redis.set(rateLimitKey, "1", { ex: RATE_LIMIT_SECONDS });
       return NextResponse.json({ error: "Wrong answer" }, { status: 403 });
     }
 

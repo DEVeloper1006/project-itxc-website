@@ -18,6 +18,8 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
   const [shake, setShake] = useState(false);
   const [visible, setVisible] = useState(false);
   const [isFirst, setIsFirst] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval>>(null);
   const answerRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +33,27 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
       setTimeout(() => answerRef.current?.focus(), 50);
     }
   }, [step]);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownRef.current) clearInterval(cooldownRef.current);
+    };
+  }, []);
+
+  const startCooldown = () => {
+    setCooldown(5);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current!);
+          cooldownRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleClose = useCallback(() => {
     setVisible(false);
@@ -60,13 +83,13 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), answer: submittedAnswer }),
       });
-      if (res.status === 403) {
+      if (res.status === 403 || res.status === 429) {
         setShake(true);
         setStep("riddle");
+        startCooldown();
         setTimeout(() => {
           setShake(false);
           setAnswer("");
-          answerRef.current?.focus();
         }, 600);
         return;
       }
@@ -81,7 +104,7 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
 
   const handleAnswerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!answer.trim()) return;
+    if (!answer.trim() || cooldown > 0) return;
     sendEntry(answer.trim());
   };
 
@@ -243,22 +266,23 @@ export default function JacketModal({ onClose }: { onClose: () => void }) {
 
             <button
               type="submit"
+              disabled={cooldown > 0}
               data-hover
-              className="mt-6 sm:mt-8 px-10 py-3 border font-gothic text-xl sm:text-2xl tracking-wide cursor-none transition-all duration-300 hover:scale-105 hover:bg-white/5"
+              className="mt-6 sm:mt-8 px-10 py-3 border font-gothic text-xl sm:text-2xl tracking-wide cursor-none transition-all duration-300 hover:scale-105 hover:bg-white/5 disabled:opacity-40 disabled:hover:scale-100 disabled:hover:bg-transparent"
               style={{
                 borderColor: `${hex}40`,
                 color: hex,
                 textShadow: `0 0 12px ${hex}66`,
               }}
             >
-              Submit
+              {cooldown > 0 ? `Wait ${cooldown}s` : "Submit"}
             </button>
 
             <span
               className="font-mono text-[10px] sm:text-xs mt-4 tracking-[0.3em] uppercase"
               style={{ color: `${hex}55` }}
             >
-              Enter your answer
+              {cooldown > 0 ? "Too many attempts" : "Enter your answer"}
             </span>
           </form>
         )}
